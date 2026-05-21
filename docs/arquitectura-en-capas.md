@@ -14,7 +14,7 @@ En software pasa lo mismo. **Cada capa tiene UNA responsabilidad clara** y se co
 
 Las capas, de abajo hacia arriba:
 
-1. **Dominio** — los objetos del negocio
+1. **dominio** — los objetos del negocio
 2. **Repositorios** — persistencia
 3. **Servicios** — reglas de negocio
 4. **Excepciones** — errores de dominio
@@ -23,7 +23,7 @@ Las capas, de abajo hacia arriba:
 
 ---
 
-## Capa 1 — Dominio (modelo)
+## Capa 1 — dominio (modelo)
 
 ### ¿Qué es?
 Las **entidades del negocio**: los conceptos del mundo real que el sistema maneja. En este TP son `Paciente`, `Odontologo`, `Domicilio`, `Turno` y `EstadoTurno`.
@@ -171,7 +171,7 @@ Acá es donde se ve cómo todo se conecta. Mirá cómo viaja la información:
 **5. Repositorios responden:**
 > *"Sí, ese paciente está", "Sí, ese odontólogo está", "No, no hay conflicto"*.
 
-**6. Servicio crea el Turno (entidad del Dominio):**
+**6. Servicio crea el Turno (entidad del dominio):**
 > Instancia un `Turno` nuevo con estado `PENDIENTE`.
 
 **7. Servicio le pide al Repositorio que lo guarde:**
@@ -201,10 +201,10 @@ Por ejemplo, el odontólogo ya tenía un turno a esa hora. Entonces:
 Vista          ──conoce a──→  Controlador
 Controlador    ──conoce a──→  Servicio
 Servicio       ──conoce a──→  Repositorio
-Servicio       ──conoce a──→  Dominio
-Repositorio    ──conoce a──→  Dominio
+Servicio       ──conoce a──→  dominio
+Repositorio    ──conoce a──→  dominio
 Excepciones    ──son usadas por──→  Servicio (lanzadas) y Vista (atrapadas)
-Dominio        ──no conoce nada de las capas superiores──
+dominio        ──no conoce nada de las capas superiores──
 ```
 
 Si un día se quiere cambiar la presentación de consola a GUI Swing, **solo se tocan las Vistas**. Los Controladores, Servicios y Repositorios siguen funcionando igual. Ese es el poder de esta separación.

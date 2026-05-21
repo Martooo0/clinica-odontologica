@@ -1,119 +1,179 @@
-# Próximos pasos del TP — Sesión del 21/05/2026
+# Estado del TP — Clínica Odontológica
 
-Contexto para retomar el trabajo. Pensado para que Claude lo lea al inicio de la próxima sesión y entienda dónde quedamos sin tener que reconstruirlo desde cero.
+> Última actualización: **21/05/2026** (final de sesión).
+>
+> Documento de contexto pensado para retomar el TP en otra sesión / otra PC sin tener que reconstruir todo desde cero.
 
 ---
 
-## Estado actual
+## Estado actual: dónde quedamos
 
-**UML de Entrega 3: COMPLETO.**
+### ✅ Completado y commiteado
 
-Archivo: `C:\Users\marti\Downloads\uml-poo-tp (1).excalidraw` (Martin lo va a guardar también en el proyecto eventualmente).
+- **UML de Entrega 3:** completo, exportado a SVG (`uml-poo-tp.svg`) para que sea legible al hacer zoom (el PNG perdía detalle).
+- **Capa Dominio (`src/dominio/`)** — 6 archivos:
+  - `EstadoTurno.java` (enum: PENDIENTE, CONFIRMADO, COMPLETADO, CANCELADO)
+  - `Persona.java` (abstract, atributos `protected`)
+  - `Paciente.java` extends Persona
+  - `Odontologo.java` extends Persona
+  - `Domicilio.java`
+  - `Turno.java`
+- **Capa Excepciones (`src/excepcion/`)** — 8 archivos:
+  - `ClinicaException.java` (extends `RuntimeException`)
+  - 7 hijas: `PacienteNoEncontradoException`, `OdontologoNoEncontradoException`, `TurnoYaReservadoException`, `TurnoNoEncontradoException`, `DatoInvalidoException`, `DniDuplicadoException`, `MatriculaDuplicadaException`.
+- **Main de prueba (`src/Main.java`)** — valida que el Dominio compila e instancia bien, y que `Turno.esFuturo()` funciona.
 
-El UML tiene 6 capas codificadas por color:
+### ⏳ Próximo paso: Capa Repositorios
 
-| Color | Capa | Contenido |
-|---|---|---|
-| Naranja | Vistas | MenuPrincipal, VistaPaciente, VistaOdontologo, VistaTurno |
-| Violeta | Controladores | ControladorPaciente, ControladorOdontologo, ControladorTurno |
-| Rojo | Servicios | ServicioPaciente, ServicioOdontologo, ServicioTurno |
-| Verde | Repositorios | IRepositorio\<T\> (interfaz) + 3 implementaciones |
-| Azul | Dominio | Persona (abstract), Paciente, Odontologo, Domicilio, Turno, EstadoTurno |
-| Amarillo | Excepciones | ClinicaException + 7 hijas |
+Ver sección **"Próximo paso concreto"** más abajo.
 
-**Total:** 28 clases + 1 interfaz + 1 enum.
+### 🔜 Después: Servicios → Controladores → Vistas + Main definitivo
 
-**Único error pendiente en el UML:** `VistaTurno.mostrarLista` tiene parámetro `List<Odontologo>` — debe ser `List<Turno>`. Copy-paste error.
+---
+
+## Estructura actual del código
+
+```
+src/
+├── Main.java                  ← prueba del Dominio (descartable)
+├── dominio/
+│   ├── EstadoTurno.java
+│   ├── Persona.java           ← abstract
+│   ├── Paciente.java          ← extends Persona
+│   ├── Odontologo.java        ← extends Persona
+│   ├── Domicilio.java
+│   └── Turno.java
+└── excepcion/
+    ├── ClinicaException.java  ← extends RuntimeException
+    ├── PacienteNoEncontradoException.java
+    ├── OdontologoNoEncontradoException.java
+    ├── TurnoYaReservadoException.java
+    ├── TurnoNoEncontradoException.java
+    ├── DatoInvalidoException.java
+    ├── DniDuplicadoException.java
+    └── MatriculaDuplicadaException.java
+```
 
 ---
 
 ## Decisiones de diseño tomadas
 
-1. **Arquitectura del profe:** capa Controller como adaptador entre Vista y Servicio (NO es Spring MVC; es MVC adaptado para consola). Justificación: la Vista trabaja con primitivos del usuario; el Controlador empaqueta esos primitivos en objetos del dominio; el Servicio aplica reglas de negocio. Documentado en `docs/arquitectura-en-capas.md`.
+### Convenciones de paquetes
+- Paquetes en **minúscula y singular**, directo bajo `src/` (sin paquete base tipo `clinica` ni dominio invertido `com.uade....`).
+- Las clases en `PascalCase`, los paquetes en `minusculas` (regla idiomática de Java).
 
-2. **Herencia:** Persona (abstract) ← Paciente, Odontologo. Atributos en `protected` (`#`). Lo pide el cronograma explícitamente (Clase 6).
+### Constructores y el `id`
+- **Los constructores NO reciben `id`.** El id queda en `null` al crear la entidad.
+- El **repositorio** asigna el id cuando se persiste (con `setId()`).
+- Cada entidad tiene 2 constructores: vacío + "completo" (sin id).
 
-3. **Relación Turno↔Paciente y Turno↔Odontologo:** **agregación** (rombo vacío), no asociación. **El profe lo enseña así** — la consigna dice "asociación" pero hay que seguir al profe.
+### Defaults en entidades del Dominio (Opción B)
+- `Turno.estado` nace siempre en `EstadoTurno.PENDIENTE` (no se recibe por constructor).
+- `Paciente.fechaIngreso = LocalDate.now()` (inicializado directamente en el campo, no se recibe por constructor).
+- Si se necesita un valor distinto (ej: cargar paciente histórico desde archivo en Entrega 4), se usa el setter después de crear.
 
-4. **Persistencia: PENDIENTE.** No vamos a usar Serializable (el profe no lo explicó todavía). Cuando llegue ese tema, decidimos entre CSV o serialización Java.
+### Herencia y `toString()`
+- `Persona` es `abstract`, atributos `protected` (lo pide el cronograma — Clase 6).
+- Las subclases hacen `super.toString() + " - DNI: ..."` para evitar repetir lógica.
+- Siempre `@Override` cuando se hereda un método (`toString()`, etc.).
 
-5. **Comparable / Comparator: PENDIENTE.** Tampoco se vio. Si se necesita ordenar pacientes por apellido antes de que el profe lo explique, usaremos `Collections.sort` con lambda en el servicio (sin implementar Comparable).
+### Excepciones
+- Todas extienden `RuntimeException` (unchecked). Razón: errores de negocio se dejan **subir** Servicio → Controlador → Vista, donde se atrapan. Si fueran checked sería ruido de `throws` por todos lados.
+- Las 7 hijas no agregan nada — solo cambia el nombre del tipo (eso ya comunica el problema).
 
-6. **Sin Optional\<T\>:** Por simplicidad, los métodos `buscarPorId` devuelven `T` directamente (`null` si no existe). El Servicio se encarga de lanzar excepción si corresponde.
+### Decisiones del profe / consigna (de UML)
+- Capa Controller como adaptador entre Vista y Servicio (NO es Spring MVC; es MVC adaptado a consola).
+- Turno↔Paciente y Turno↔Odontologo es **agregación** (rombo vacío), no asociación. Así lo enseña el profe.
+
+### Pendientes técnicos del diseño
+- **Persistencia:** PENDIENTE. Decidir CSV o serialización Java cuando el profe explique el tema (Clase 14).
+- **Comparable/Comparator:** PENDIENTE. Si se necesita ordenar antes de que se vea (Clase 12), usar `Collections.sort` con lambda en el servicio (sin implementar Comparable).
+- **Sin `Optional<T>`:** los `buscarPorId` devuelven `T` directamente (`null` si no existe). El Servicio decide si lanzar excepción.
+
+---
+
+## Próximo paso concreto: Capa Repositorios
+
+### Lo que hay que crear
+
+```
+src/repositorio/
+├── IRepositorio.java               ← interfaz genérica
+├── RepositorioPaciente.java        ← implements IRepositorio<Paciente>
+├── RepositorioOdontologo.java      ← implements IRepositorio<Odontologo>
+└── RepositorioTurno.java           ← implements IRepositorio<Turno>
+```
+
+### 3 conceptos nuevos a aprender (juntos)
+
+1. **Genéricos en Java** (`<T>`): cómo escribir código que sirva para cualquier tipo.
+2. **Interfaces** (`interface`): definir un contrato sin implementarlo.
+3. **`HashMap<K,V>`**: estructura de datos clave-valor para guardar entidades por id.
+
+### Métodos de la interfaz `IRepositorio<T>` (del UML)
+
+```
++ guardar(entidad: T): T
++ buscarPorId(id: Long): T
++ buscarTodos(): List<T>
++ actualizar(entidad: T): T
++ eliminar(id: Long): void
+```
+
+### Métodos extra de cada implementación (del UML)
+
+- `RepositorioPaciente`: `buscarPorDni(dni: String): Paciente`
+- `RepositorioOdontologo`: `buscarPorMatricula(matricula: String): Odontologo`
+- `RepositorioTurno`: `buscarPorPaciente(idPaciente: Long): List<Turno>`, `buscarPorOdontologo(idOdontologo: Long): List<Turno>`, `buscarPorFecha(fecha: LocalDate): List<Turno>`
+
+### Atributos internos de cada implementación
+
+- Un `Map<Long, T>` (HashMap) para guardar las entidades por id.
+- Un `Long contadorId` que arranca en 0 y se incrementa con cada `guardar()`.
+- En `guardar()`: `entidad.setId(++contadorId); mapa.put(entidad.getId(), entidad);`.
+
+### Orden sugerido (para no abrumarse)
+
+1. Interfaz `IRepositorio<T>` sola (~15-20 min, concepto de genéricos).
+2. `RepositorioPaciente` con detalle (HashMap + contadorId + buscarPorDni).
+3. `RepositorioOdontologo` y `RepositorioTurno` por analogía (más rápido).
 
 ---
 
 ## Pendientes administrativos
 
-- **Confirmar fecha real de Entrega 3 con el profe.** Hay inconsistencia:
+- **Confirmar fecha real de Entrega 3 con el profe.** Sigue la inconsistencia:
   - Cronograma oficial: Clase 11 = 26/05/2026
   - Consigna detallada: Clase 14 = 16/06/2026
-
-  Esto cambia si llegaremos a ver Comparable (Clase 12, 02/06) y Serialización (Clase 14, 16/06) antes de entregar.
-
----
-
-## Próximo paso concreto: empezar a implementar el código
-
-El UML está listo. Ahora toca traducirlo a Java SE puro.
-
-**Orden sugerido para la implementación (de adentro hacia afuera):**
-
-1. **Capa Dominio** (lo más independiente):
-   - Crear paquete `modelo/`
-   - Implementar `Persona` (abstract), `Paciente`, `Odontologo`, `Domicilio`, `Turno`, `EstadoTurno`
-   - Probarlo con un `main` mínimo que cree instancias e imprima.
-
-2. **Capa Excepciones:**
-   - Crear paquete `excepcion/`
-   - Implementar `ClinicaException` (extends RuntimeException) y las 7 hijas.
-
-3. **Capa Repositorios:**
-   - Crear paquete `repositorio/`
-   - Implementar `IRepositorio<T>` (interfaz genérica)
-   - Implementar los 3 repos concretos con HashMap.
-
-4. **Capa Servicios:**
-   - Crear paquete `servicio/`
-   - Implementar los 3 servicios con validaciones y lanzando excepciones.
-
-5. **Capa Controladores:**
-   - Crear paquete `controlador/`
-   - Implementar los 3 controladores.
-
-6. **Capa Vistas + Main:**
-   - Crear paquete `vista/`
-   - Implementar las 3 vistas + MenuPrincipal.
-   - El `Main` arma todo y llama a `menuPrincipal.iniciar()`.
+  - Esto cambia si llegamos a ver Comparable (Clase 12, 02/06) y Serialización (Clase 14, 16/06) antes de entregar.
 
 ---
 
 ## Estilo de trabajo a respetar
 
 - **Martin pidió ser guiado paso a paso, NO recibir código terminado.**
-- Explicar conceptos antes de tocar código.
+- Explicar conceptos **antes** de tocar código.
 - Proponer 1 paso a la vez y esperar a que él lo implemente.
 - Revisar el código que él escriba; explicar mejoras, no reescribirlo entero.
-- Excepción: andamiajes mecánicos (imports, getters/setters obvios) sí pueden mostrarse enteros si él los pide.
+- **Excepción:** andamiajes mecánicos (imports, getters/setters obvios, toString con muchos campos) sí pueden mostrarse enteros si él los pide.
+- Martin no siempre pega el código que escribió — abrir los archivos en `src/` con la herramienta Read para verificar el estado real.
+- Cuando él avisa "ya hice X, sigamos", siempre revisar primero antes de avanzar.
 
 ---
 
 ## Archivos clave del proyecto
 
-- `docs/arquitectura-en-capas.md` — apuntes completos sobre la arquitectura de las 6 capas (sirve para defender el TP).
-- `docs/proximos-pasos.md` — este archivo.
-- `src/consignaTP.md` — consigna oficial del TP.
-- `C:\Users\marti\Downloads\consignadelTP.md` — versión más larga.
-- `C:\Users\marti\Downloads\Proyecto_Clinica_Odontologica_POO_Refactorizado.pdf` — doc general.
-- `C:\Users\marti\Downloads\Cronograma_POO_2026.pdf` — cronograma de clases.
-- `C:\Users\marti\Downloads\uml-poo-tp (1).excalidraw` — UML final de Entrega 3.
+- `docs/arquitectura-en-capas.md` — apuntes completos sobre las 6 capas (sirve para defender el TP).
+- `docs/proximos-pasos.md` — este archivo (estado y próximo paso).
+- `uml-poo-tp.svg` — UML completo en SVG (legible al hacer zoom). **Usar esta versión.**
+- `uml-poo-tp.excalidraw.png` — versión PNG anterior (más borrosa, evitar).
 
 ---
 
-## Para retomar mañana
+## Para retomar en la próxima sesión / otra PC
 
-Empezá la próxima sesión diciéndome:
+Decile a Claude (copy-paste):
 
-> *"Hola, retomemos el TP de Clínica Odontológica. Leé `docs/proximos-pasos.md` para tener contexto y arranquemos por la Capa de Dominio."*
+> *"Hola, retomemos el TP de Clínica Odontológica. Leé `docs/proximos-pasos.md` para ponerte al día, revisá rápido el estado del código en `src/` y arrancamos por la **Capa Repositorios**, empezando por la interfaz `IRepositorio<T>`."*
 
-Yo voy a leer este archivo, voy a entender dónde quedamos, y vamos a arrancar por implementar el Dominio paso a paso.
+Claude va a leer este archivo, mirar los archivos `.java` en `src/` para confirmar el estado real, y arrancar con la interfaz `IRepositorio<T>` paso a paso.

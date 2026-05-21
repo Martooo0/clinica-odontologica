@@ -7,7 +7,7 @@ public class Main {
     public static void main(String[] args) {
 
         // 1. Crear domicilio
-        Domicilio dom = new Domicilio("Av. Siempre Viva", "742",
+        Domicilio dom = new Domicilio("Av. Peron", "742",
                 "Springfield", "Buenos Aires");
         System.out.println("Domicilio: " + dom);
 
