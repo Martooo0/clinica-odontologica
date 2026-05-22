@@ -1,6 +1,8 @@
 # Estado del TP — Clínica Odontológica
 
-> Última actualización: **22/05/2026** (en curso de sesión — cambios de repositorio aún SIN commitear).
+> Última actualización: **22/05/2026 (noche)** — cierre de sesión antes de viaje.
+>
+> **Entrega: martes 26/05/2026.** Martin se va de viaje el fin de semana con la notebook para seguir trabajando.
 >
 > Documento de contexto pensado para retomar el TP en otra sesión / otra PC sin tener que reconstruir todo desde cero.
 
@@ -10,32 +12,31 @@
 
 ### ✅ Completado y commiteado
 
-- **UML de Entrega 3:** completo, exportado a SVG (`uml-poo-tp.svg`) para que sea legible al hacer zoom (el PNG perdía detalle).
-- **Capa Dominio (`src/dominio/`)** — 6 archivos:
-  - `EstadoTurno.java` (enum: PENDIENTE, CONFIRMADO, COMPLETADO, CANCELADO)
-  - `Persona.java` (abstract, atributos `protected`)
-  - `Paciente.java` extends Persona
-  - `Odontologo.java` extends Persona
-  - `Domicilio.java`
-  - `Turno.java`
-- **Capa Excepciones (`src/excepcion/`)** — 8 archivos:
-  - `ClinicaException.java` (extends `RuntimeException`)
-  - 7 hijas: `PacienteNoEncontradoException`, `OdontologoNoEncontradoException`, `TurnoYaReservadoException`, `TurnoNoEncontradoException`, `DatoInvalidoException`, `DniDuplicadoException`, `MatriculaDuplicadaException`.
-- **Main de prueba (`src/Main.java`)** — valida que el Dominio compila e instancia bien, y que `Turno.esFuturo()` funciona.
+- **UML de Entrega 3:** completo, en `uml-poo-tp.svg` (PNG viejo borrado).
+- **Capa Dominio (`src/dominio/`)** — 6 archivos: `EstadoTurno`, `Persona` (abstract), `Paciente`, `Odontologo`, `Domicilio`, `Turno`.
+- **Capa Excepciones (`src/excepcion/`)** — 8 archivos: `ClinicaException` (extends `RuntimeException`) + 7 hijas (`PacienteNoEncontradoException`, `OdontologoNoEncontradoException`, `TurnoYaReservadoException`, `TurnoNoEncontradoException`, `DatoInvalidoException`, `DniDuplicadoException`, `MatriculaDuplicadaException`).
+- **Capa Repositorios (`src/repositorio/`)** — 4 archivos: `IRepositorio<T>` + `RepositorioPaciente` + `RepositorioOdontologo` + `RepositorioTurno`. Commit: `06e4ed7`.
+- **Main de prueba (`src/Main.java`)** — valida que Dominio compila e instancia. Es descartable.
 
-### 🛠 En esta sesión (22/05/2026) — Capa Repositorios COMPLETA, SIN commitear todavía
+### 🛠 En esta sesión (22/05/2026 noche) — Capa Servicios EN PROGRESO, SIN commitear todavía
 
-- **Capa Repositorios (`src/repositorio/`)** — los 4 archivos terminados:
-  - `IRepositorio.java` — interfaz genérica `<T>` con los 5 métodos del UML (`guardar`, `buscarPorId`, `buscarTodos`, `actualizar`, `eliminar`).
-  - `RepositorioPaciente.java` — implementación completa: `Map<Long, Paciente>` + `contadorId` (arranca en 0L, se incrementa con `++contadorId` PREFIJO para que los ids arranquen en 1L). Incluye método extra `buscarPorDni(String dni)` con for-each + `.equals()`.
-  - `RepositorioOdontologo.java` — análogo a Paciente. Método extra: `buscarPorMatricula(String matricula)`.
-  - `RepositorioTurno.java` — análogo en los 5 del contrato. 3 métodos extra (`buscarPorPaciente`, `buscarPorOdontologo`, `buscarPorFecha`) que devuelven `List<Turno>` usando el patrón "acumular en lista".
+**`src/servicio/ServicioPaciente.java`** — 3 de 6 métodos hechos:
 
-### ⏳ Próximo paso: Capa Servicios
+- ✅ `registrar(Paciente paciente): Paciente` — valida DNI (no null/vacío), chequea duplicado por DNI, delega al repo.
+- ✅ `buscarPorId(Long id): Paciente` — pide al repo, si null lanza `PacienteNoEncontradoException`.
+- ✅ `buscarPorDni(String dni): Paciente` — valida DNI de entrada, pide al repo, si null lanza `PacienteNoEncontradoException`.
 
-Ver sección **"Próximo paso concreto"** más abajo.
+**Faltan en `ServicioPaciente` (en este orden propuesto para mañana):**
 
-### 🔜 Después: Controladores → Vistas + Main definitivo
+- ⏳ `modificar(Paciente paciente): Paciente` — chequear que exista, delegar al `repo.actualizar()`.
+- ⏳ `eliminar(Long id): void` — chequear que exista, delegar al `repo.eliminar()`.
+- ⏳ `listarTodos(): List<Paciente>` — delegar directo a `repo.buscarTodos()`.
+
+### 🔜 Después de cerrar `ServicioPaciente`
+
+1. `ServicioOdontologo` — por analogía (más rápido, mismo patrón con `MatriculaDuplicadaException`/`OdontologoNoEncontradoException`).
+2. `ServicioTurno` — el más interesante, combina 3 repos. Regla clave: "no hay 2 turnos al mismo odontólogo a la misma hora" → `TurnoYaReservadoException`.
+3. **Controladores** → **Vistas** → **Main definitivo**.
 
 ---
 
@@ -43,156 +44,130 @@ Ver sección **"Próximo paso concreto"** más abajo.
 
 ```
 src/
-├── Main.java                  ← prueba del Dominio (descartable)
-├── dominio/
+├── Main.java                          ← prueba del Dominio (descartable)
+├── dominio/                           ← ✅ commiteado
 │   ├── EstadoTurno.java
-│   ├── Persona.java           ← abstract
-│   ├── Paciente.java          ← extends Persona
-│   ├── Odontologo.java        ← extends Persona
+│   ├── Persona.java                   ← abstract
+│   ├── Paciente.java
+│   ├── Odontologo.java
 │   ├── Domicilio.java
 │   └── Turno.java
-├── excepcion/
-│   ├── ClinicaException.java  ← extends RuntimeException
-│   ├── PacienteNoEncontradoException.java
-│   ├── OdontologoNoEncontradoException.java
-│   ├── TurnoYaReservadoException.java
-│   ├── TurnoNoEncontradoException.java
-│   ├── DatoInvalidoException.java
-│   ├── DniDuplicadoException.java
-│   └── MatriculaDuplicadaException.java
-└── repositorio/                       ← ✅ COMPLETA (sin commit aún)
-    ├── IRepositorio.java              ← interfaz genérica <T>
-    ├── RepositorioPaciente.java       ← + buscarPorDni
-    ├── RepositorioOdontologo.java     ← + buscarPorMatricula
-    └── RepositorioTurno.java          ← + buscarPorPaciente / buscarPorOdontologo / buscarPorFecha
+├── excepcion/                         ← ✅ commiteado
+│   ├── ClinicaException.java          ← extends RuntimeException
+│   └── 7 excepciones hijas
+├── repositorio/                       ← ✅ commiteado (06e4ed7)
+│   ├── IRepositorio.java              ← interfaz genérica <T>
+│   ├── RepositorioPaciente.java       ← + buscarPorDni
+│   ├── RepositorioOdontologo.java     ← + buscarPorMatricula
+│   └── RepositorioTurno.java          ← + buscarPorPaciente / buscarPorOdontologo / buscarPorFecha
+└── servicio/                          ← 🛠 EN PROGRESO
+    └── ServicioPaciente.java          ← 3/6 métodos (registrar, buscarPorId, buscarPorDni)
 ```
+
+---
+
+## Métodos del UML — `ServicioPaciente`
+
+(Confirmado por screenshot que Martin pasó del UML — la consulta por grep al SVG dio resultados parciales, ver nota más abajo.)
+
+```
++ registrar(paciente: Paciente): Paciente             ← ✅ hecho
++ buscarPorId(id: Long): Paciente                     ← ✅ hecho
++ buscarPorDni(dni: String): Paciente                 ← ✅ hecho
++ listarTodos(): List<Paciente>                       ← ⏳ pendiente
++ modificar(paciente: Paciente): Paciente             ← ⏳ pendiente
++ eliminar(id: Long): void                            ← ⏳ pendiente
+```
+
+**Nombres importantes a respetar (NO inventar):** `modificar` (no "actualizar"), `listarTodos` (no "listar").
 
 ---
 
 ## Decisiones de diseño tomadas
 
 ### Convenciones de paquetes
-- Paquetes en **minúscula y singular**, directo bajo `src/` (sin paquete base tipo `clinica` ni dominio invertido `com.uade....`).
-- Las clases en `PascalCase`, los paquetes en `minusculas` (regla idiomática de Java).
+- Paquetes en **minúscula y singular**, directo bajo `src/`.
 
 ### Constructores y el `id`
-- **Los constructores NO reciben `id`.** El id queda en `null` al crear la entidad.
-- El **repositorio** asigna el id cuando se persiste (con `setId()`).
-- Cada entidad tiene 2 constructores: vacío + "completo" (sin id).
+- Los constructores NO reciben `id`. El **repositorio** asigna el id con `setId()` al persistir.
 
-### Defaults en entidades del Dominio (Opción B)
-- `Turno.estado` nace siempre en `EstadoTurno.PENDIENTE` (no se recibe por constructor).
-- `Paciente.fechaIngreso = LocalDate.now()` (inicializado directamente en el campo, no se recibe por constructor).
-- Si se necesita un valor distinto (ej: cargar paciente histórico desde archivo en Entrega 4), se usa el setter después de crear.
-
-### Herencia y `toString()`
-- `Persona` es `abstract`, atributos `protected` (lo pide el cronograma — Clase 6).
-- Las subclases hacen `super.toString() + " - DNI: ..."` para evitar repetir lógica.
-- Siempre `@Override` cuando se hereda un método (`toString()`, etc.).
+### Defaults en entidades (Opción B)
+- `Turno.estado` = `EstadoTurno.PENDIENTE` siempre al crear.
+- `Paciente.fechaIngreso = LocalDate.now()` inicializado en el campo.
 
 ### Excepciones
-- Todas extienden `RuntimeException` (unchecked). Razón: errores de negocio se dejan **subir** Servicio → Controlador → Vista, donde se atrapan. Si fueran checked sería ruido de `throws` por todos lados.
-- Las 7 hijas no agregan nada — solo cambia el nombre del tipo (eso ya comunica el problema).
+- Todas extienden `RuntimeException` (unchecked). Suben Servicio → Controlador → Vista.
 
-### Decisiones del profe / consigna (de UML)
-- Capa Controller como adaptador entre Vista y Servicio (NO es Spring MVC; es MVC adaptado a consola).
-- Turno↔Paciente y Turno↔Odontologo es **agregación** (rombo vacío), no asociación. Así lo enseña el profe.
+### Repositorio "tonto"
+- NO chequea existencia ni lanza excepciones de negocio. `actualizar` con id inexistente lo agrega (`Map.put`); `eliminar` con id inexistente no hace nada; `buscarPor*` devuelven `null` si no encuentran. Es el **Servicio** el que chequea y lanza excepciones.
+- `guardar()` devuelve `T` (no `void`) porque el llamador necesita el id asignado.
+- `++contadorId` PREFIJO para que los ids arranquen en 1L (no 0L).
+- `buscarTodos()` devuelve copia: `new ArrayList<>(mapa.values())`.
+
+### Decisiones de la capa Servicios (consolidadas 22/05 noche)
+
+- **Composición vía atributo**, inicializado en el campo:
+  ```java
+  private RepositorioPaciente repositorio = new RepositorioPaciente();
+  ```
+  Más adelante (Controlador) se va a pasar por constructor / inyección. Por ahora simple.
+- **El Servicio endurece el contrato del Repo:** si el repo devuelve `null` en `buscarPorId`/`buscarPorDni`, el servicio lanza excepción. El llamador ya no tiene que chequear null.
+- **Patrón "validar → chequear unicidad → delegar"** en los `registrar`. Cada paso con su propio `if` + `throw`.
+- **Patrón "early throw" / guard clauses:** sin `else`, ifs planos. Cuando un `if` lanza excepción, el flujo se corta solo — no hace falta `else`.
+- **Validación de entrada:**
+  - `String` → siempre chequear `== null || .isEmpty()` (cortocircuito en este orden).
+  - `Long` → sólo `== null` (los números no están "vacíos").
+- **Mensajes de excepción:** describen el problema técnico (`"El DNI no puede estar vacío"`), NO son mensajes de UI. La Vista los traduce al usuario.
+- **Reusar el resultado del repo:** si ya pediste algo y lo guardaste en variable, no vuelvas a pedirlo. (Hoy es gratis con `HashMap`, pero el día de DB/archivo cada viaje cuesta.)
+- **Nombres de variables:** `existe` o `pacienteEncontrado` mejor que `tieneId` (que parece boolean).
 
 ### Pendientes técnicos del diseño
-- **Persistencia:** PENDIENTE. Decidir CSV o serialización Java cuando el profe explique el tema (Clase 14).
-- **Comparable/Comparator:** PENDIENTE. Si se necesita ordenar antes de que se vea (Clase 12), usar `Collections.sort` con lambda en el servicio (sin implementar Comparable).
-- **Sin `Optional<T>`:** los `buscarPorId` devuelven `T` directamente (`null` si no existe). El Servicio decide si lanzar excepción.
+- **Persistencia:** PENDIENTE (CSV o serialización, depende de Clase 14).
+- **Comparable/Comparator:** PENDIENTE. Si hace falta ordenar antes de Clase 12, usar `Collections.sort` con lambda en el servicio.
+- **Sin `Optional<T>`:** los repos devuelven `T` o `null`.
 
-### Decisiones del Repositorio consolidadas en la sesión del 22/05/2026
-- **Repo "tonto":** el repositorio NO chequea existencia ni lanza excepciones de negocio. `actualizar(entidad)` con id inexistente simplemente lo agrega (es `Map.put`); `eliminar(id)` con id inexistente no hace nada (es `Map.remove`); `buscarPorId` y `buscarPorDni`/`buscarPorMatricula` devuelven `null` si no encuentran. Es el **Servicio** quien chequea con `buscarPorId` antes y lanza `PacienteNoEncontradoException` / etc. Mantiene la responsabilidad de validación en un solo lugar y al repo sin lógica de negocio.
-- **`guardar()` devuelve `T`** (no `void`) porque después de asignar el id, el llamador necesita la entidad de vuelta para conocer el id que le tocó.
-- **`++contadorId` (prefijo), no `contadorId++` (postfijo):** los ids tienen que arrancar en 1L, no en 0L. Con postfijo el primer paciente quedaría con id 0.
-- **`buscarTodos()` devuelve una COPIA:** `new ArrayList<>(mapa.values())`. Dos razones: (1) la firma exige `List`, no `Collection`; (2) encapsulación — si devolvieras `values()` directo, modificar la lista afectaría el Map interno.
-- **Métodos extra fuera del contrato NO llevan `@Override`** (no están sobrescribiendo nada). Solo los 5 de la interfaz lo llevan.
+### Conceptos Java vistos por Martin en esta sesión (Servicios)
+- **Composición** (Servicio TIENE un Repositorio como atributo).
+- **Lanzar excepciones:** `throw new XxxException("mensaje")`. Como son `RuntimeException`, no hace falta `throws` en la firma.
+- **Cortocircuito de `||`:** el null check va PRIMERO; si la primera condición da `true`, la segunda no se evalúa → evita NPE.
+- **NullPointerException:** llamar un método sobre `null` explota.
+- **`isEmpty()` es de `String`, NO de `Long`:** los números no se chequean con `isEmpty`.
+- **Guard clauses / early throw:** preferir varios `if`+`throw` planos en vez de `if/else if` anidados.
+- **Endurecer contrato:** un servicio puede prometer más fuerte que su repo (devolver siempre algo válido o explotar).
 
-### Conceptos Java vistos por Martin en esta sesión
-- `interface` vs `class`; `implements` lo usan solo las clases.
-- Genéricos `<T>` — declarar interfaz genérica e instanciarla con `IRepositorio<Paciente>`.
-- `Map<K,V>` vs `HashMap<K,V>`: declarar con la interfaz, instanciar con la implementación.
-- Métodos de `Map`: `put`, `get`, `remove`, `containsKey`, `values()`.
-- `++` prefijo vs postfijo.
-- `Collection<T>` vs `List<T>` — supertipos, copia con `new ArrayList<>(...)`.
-- `==` vs `.equals()` — para Strings, para `Long` (objetos wrapper) y para cualquier objeto.
-- `for-each` sobre `mapa.values()`.
-- Diamante `<>` en `new HashMap<>()` (Java infiere los tipos).
-- Patrón "buscar uno y cortar" (`return p` dentro del if) vs "acumular en lista" (`resultado.add(t)` sin cortar) — el segundo lo vamos a ver al hacer `RepositorioTurno`.
-- Convención: una colección sin resultados se devuelve vacía, no `null`.
-
-### Estilo de comentarios que Martin viene usando
-Mientras aprende, escribe comentarios "para él" en las líneas que le costaron (ej: explicar prefijo vs postfijo, explicar la decisión del repo tonto en `actualizar`). Está bien por ahora. En revisión final se podrán borrar los que repiten el nombre del método o del parámetro; los que explican un **why** no obvio (como el comentario del `++contadorId`) se quedan.
+### Estilo de comentarios de Martin
+Mientras aprende, escribe comentarios "para él" en líneas que le costaron. Está bien por ahora. **OJO con dejar comentarios desfasados** cuando se cambia la lógica (ya pasó una vez: comentario decía "si la variable está vacía" después de que la condición cambió a `!= null`). Cuando cambies un `if`, releé el comentario.
 
 ---
 
-## Próximo paso concreto: Capa Servicios
+## Próximo paso concreto: terminar `ServicioPaciente`
 
-### Lo que hay que crear
+Orden sugerido para mañana:
 
-```
-src/servicio/
-├── ServicioPaciente.java
-├── ServicioOdontologo.java
-└── ServicioTurno.java
-```
+### 1. `modificar(Paciente paciente): Paciente`
+- Reusar `buscarPorId(paciente.getId())` (¡aprovechar que ya existe en el servicio!) → si el paciente no existe, ese método ya lanza `PacienteNoEncontradoException` solo.
+- Delegar a `repositorio.actualizar(paciente)` y devolver lo que devuelve.
+- Concepto nuevo: **un método del servicio reusando otro método del mismo servicio**.
 
-(El UML muestra que NO hay una interfaz genérica `IServicio<T>` — cada servicio tiene su propia API, con reglas de negocio distintas.)
+### 2. `eliminar(Long id): void`
+- Mismo patrón que `modificar`: chequear existencia con `buscarPorId(id)`, después `repositorio.eliminar(id)`.
+- Concepto nuevo: método con retorno `void`.
 
-### Rol del Servicio (vs Repositorio)
+### 3. `listarTodos(): List<Paciente>`
+- Una sola línea: `return repositorio.buscarTodos();`
+- Sin validación, sin chequeo. Es delegación pura. (Si la lista está vacía, devolvés lista vacía — no excepción.)
+- Concepto nuevo: cuándo NO hace falta lógica en el servicio (cuando no hay reglas que aplicar).
 
-El **Repositorio** es tonto: solo guarda, busca, actualiza, elimina. El **Servicio** es donde vive la **lógica de negocio**:
-
-- Validar datos antes de guardar (DNI no vacío, fecha no pasada, etc.).
-- Chequear unicidad y lanzar excepciones (`DniDuplicadoException`, `MatriculaDuplicadaException`, `TurnoYaReservadoException`).
-- Chequear existencia y lanzar excepciones (`PacienteNoEncontradoException`, etc.) en operaciones que requieren que la entidad ya exista (actualizar, eliminar, buscar).
-- Combinar varios repositorios cuando una operación toca más de una entidad (ej: dar de alta un Turno necesita validar que el Paciente y el Odontologo existan).
-
-### Atributos típicos de un servicio
-
-```java
-public class ServicioPaciente {
-    private RepositorioPaciente repositorio = new RepositorioPaciente();
-    // ...
-}
-```
-
-Después en el Controlador, en lugar de instanciar el repo, se va a inyectar (o pasarse por constructor). Eso lo vemos cuando llegue.
-
-### Métodos típicos (del UML)
-
-Cada servicio espeja los 5 del repo pero con validaciones y excepciones encima. Ejemplo `ServicioPaciente`:
-
-- `registrar(Paciente p): Paciente` → valida + chequea DNI único + delega `repo.guardar(p)`.
-- `buscarPorId(Long id): Paciente` → si `repo.buscarPorId(id) == null`, lanza `PacienteNoEncontradoException`.
-- `actualizar(Paciente p): Paciente` → chequea que exista, luego `repo.actualizar(p)`.
-- `eliminar(Long id): void` → chequea que exista, luego `repo.eliminar(id)`.
-- `listar(): List<Paciente>` → delega a `repo.buscarTodos()`.
-
-(Confirmar nombres exactos contra el UML antes de tipear.)
-
-### Conceptos nuevos a aprender en esta capa
-
-1. **Composición:** un Servicio TIENE un Repositorio (lo guarda como atributo).
-2. **Validaciones y lanzamiento de excepciones:** usar las 8 clases de `excepcion/` que ya existen.
-3. **Orquestación de múltiples repos:** `ServicioTurno` necesita `RepositorioTurno` + `RepositorioPaciente` + `RepositorioOdontologo`.
-
-### Orden sugerido
-
-1. `ServicioPaciente` con detalle (introducir composición + primeras validaciones + uso de excepciones).
-2. `ServicioOdontologo` por analogía (más rápido).
-3. `ServicioTurno` al final — el más interesante porque combina 3 repos y tiene la regla "no hay 2 turnos al mismo odontólogo a la misma hora" (`TurnoYaReservadoException`).
+### Después de terminar `ServicioPaciente`
+- Empezar `ServicioOdontologo` (analogía directa: mismo patrón con DNI → matrícula, y excepciones equivalentes).
 
 ---
 
 ## Pendientes administrativos
 
-- **Confirmar fecha real de Entrega 3 con el profe.** Sigue la inconsistencia:
-  - Cronograma oficial: Clase 11 = 26/05/2026
-  - Consigna detallada: Clase 14 = 16/06/2026
-  - Esto cambia si llegamos a ver Comparable (Clase 12, 02/06) y Serialización (Clase 14, 16/06) antes de entregar.
+- **Entrega 3: martes 26/05/2026.** Confirmado por Martin.
+- Cronograma oficial decía Clase 11 = 26/05 y la consigna detallada Clase 14 = 16/06. Confirmar fecha real con el profe el día martes.
+- **Viaje fin de semana 23-24/05:** Martin se lleva la notebook para seguir.
 
 ---
 
@@ -202,25 +177,30 @@ Cada servicio espeja los 5 del repo pero con validaciones y excepciones encima. 
 - Explicar conceptos **antes** de tocar código.
 - Proponer 1 paso a la vez y esperar a que él lo implemente.
 - Revisar el código que él escriba; explicar mejoras, no reescribirlo entero.
-- **Excepción:** andamiajes mecánicos (imports, getters/setters obvios, toString con muchos campos) sí pueden mostrarse enteros si él los pide.
-- Martin no siempre pega el código que escribió — abrir los archivos en `src/` con la herramienta Read para verificar el estado real.
-- Cuando él avisa "ya hice X, sigamos", siempre revisar primero antes de avanzar.
+- **Excepción:** andamiajes mecánicos (imports, getters/setters obvios) sí pueden mostrarse enteros si los pide.
+- Martin no siempre pega el código que escribió — abrir los archivos en `src/` con `Read` para verificar el estado real antes de cualquier consejo o commit.
+- Cuando avisa "ya hice X, sigamos", siempre revisar primero.
+
+---
+
+## Nota técnica: leer el UML
+
+**Claude puede ver imágenes PNG/JPG con visión (multimodal), pero NO renderiza SVG.** El `uml-poo-tp.svg` se lee como XML (texto), y cuando se hace `grep` los métodos largos quedan fragmentados en varios `<text>` tags. Por eso una consulta automática puede "ver mal" algunos métodos (ej: detectar `listar()` cuando en realidad es `listarTodos(): List<Paciente>`).
+
+**Solución práctica:** cuando haga falta confirmar un método puntual del UML, Martin pasa un screenshot PNG del UML — eso Claude lo lee bien con visión. Funcionó perfecto con el screenshot de `ServicioPaciente`.
 
 ---
 
 ## Archivos clave del proyecto
 
-- `docs/arquitectura-en-capas.md` — apuntes completos sobre las 6 capas (sirve para defender el TP).
-- `docs/proximos-pasos.md` — este archivo (estado y próximo paso).
-- `uml-poo-tp.svg` — UML completo en SVG (legible al hacer zoom). **Usar esta versión.**
-- `uml-poo-tp.excalidraw.png` — versión PNG anterior (más borrosa, evitar).
+- `docs/arquitectura-en-capas.md` — apuntes completos sobre las 6 capas (para defender el TP).
+- `docs/proximos-pasos.md` — este archivo.
+- `uml-poo-tp.svg` — UML completo en SVG (legible al hacer zoom). Para Claude: pedirle screenshot a Martin si hace falta confirmar un método.
 
 ---
 
-## Para retomar en la próxima sesión / otra PC
+## Para retomar mañana
 
-Decile a Claude (copy-paste):
+Copy-paste a Claude:
 
-> *"Hola, retomemos el TP de Clínica Odontológica. Leé `docs/proximos-pasos.md` para ponerte al día, revisá rápido el estado del código en `src/` y arrancamos por la **Capa Repositorios**, empezando por la interfaz `IRepositorio<T>`."*
-
-Claude va a leer este archivo, mirar los archivos `.java` en `src/` para confirmar el estado real, y arrancar con la interfaz `IRepositorio<T>` paso a paso.
+> *"Hola, retomemos el TP de Clínica Odontológica. Leé `docs/proximos-pasos.md` para ponerte al día, revisá el estado actual de `src/servicio/ServicioPaciente.java` y arrancamos con el método `modificar` siguiendo el orden de mañana propuesto (modificar → eliminar → listarTodos). Recordá: guía paso a paso, no escribas el código por mí. Cuando necesites mirar algún método puntual del UML, pedime un screenshot."*
