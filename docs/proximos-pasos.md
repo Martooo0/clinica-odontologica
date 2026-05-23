@@ -16,21 +16,11 @@
 - **Capa Dominio (`src/dominio/`)** — 6 archivos: `EstadoTurno`, `Persona` (abstract), `Paciente`, `Odontologo`, `Domicilio`, `Turno`.
 - **Capa Excepciones (`src/excepcion/`)** — 8 archivos: `ClinicaException` (extends `RuntimeException`) + 7 hijas (`PacienteNoEncontradoException`, `OdontologoNoEncontradoException`, `TurnoYaReservadoException`, `TurnoNoEncontradoException`, `DatoInvalidoException`, `DniDuplicadoException`, `MatriculaDuplicadaException`).
 - **Capa Repositorios (`src/repositorio/`)** — 4 archivos: `IRepositorio<T>` + `RepositorioPaciente` + `RepositorioOdontologo` + `RepositorioTurno`. Commit: `06e4ed7`.
+- **Capa Servicios (`src/servicio/`)** — 3 archivos completos. Commit: `1898d7f`.
+  - `ServicioPaciente` — 6/6 métodos: `registrar`, `buscarPorId`, `buscarPorDni`, `modificar`, `eliminar`, `listarTodos`.
+  - `ServicioOdontologo` — 6/6 métodos: ídem con matrícula y excepciones de odontólogo.
+  - `ServicioTurno` — 9/9 métodos: `reservar`, `buscarPorId`, `confirmar`, `cancelar`, `modificar`, `listarTodos`, `listarPorPaciente`, `listarPorOdontologo`, `listarPorFecha`.
 - **Main de prueba (`src/Main.java`)** — valida que Dominio compila e instancia. Es descartable.
-
-### 🛠 En esta sesión (22/05/2026 noche) — Capa Servicios EN PROGRESO, SIN commitear todavía
-
-**`src/servicio/ServicioPaciente.java`** — 3 de 6 métodos hechos:
-
-- ✅ `registrar(Paciente paciente): Paciente` — valida DNI (no null/vacío), chequea duplicado por DNI, delega al repo.
-- ✅ `buscarPorId(Long id): Paciente` — pide al repo, si null lanza `PacienteNoEncontradoException`.
-- ✅ `buscarPorDni(String dni): Paciente` — valida DNI de entrada, pide al repo, si null lanza `PacienteNoEncontradoException`.
-
-**Faltan en `ServicioPaciente` (en este orden propuesto para mañana):**
-
-- ⏳ `modificar(Paciente paciente): Paciente` — chequear que exista, delegar al `repo.actualizar()`.
-- ⏳ `eliminar(Long id): void` — chequear que exista, delegar al `repo.eliminar()`.
-- ⏳ `listarTodos(): List<Paciente>` — delegar directo a `repo.buscarTodos()`.
 
 ### 🔜 Después de cerrar `ServicioPaciente`
 

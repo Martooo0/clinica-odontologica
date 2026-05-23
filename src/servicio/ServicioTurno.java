@@ -67,6 +67,11 @@ public class ServicioTurno {
         return repositorioTurno.actualizar(turno);
     }
 
+    public void eliminar(Long id) {
+        buscarPorId(id);
+        repositorioTurno.eliminar(id);
+    }
+
     public List<Turno> listarTodos() {
         return repositorioTurno.buscarTodos();
     }
