@@ -21,13 +21,13 @@ public class VistaOdontologo {
     public void mostrarMenu() {
         int opcion;
         do {
-            System.out.println("Bienvenido al Menu de Odontologos");
-            System.out.println("1. Crear Odontologo");
-            System.out.println("2. Buscar Odontologo por su ID");
-            System.out.println("3. Buscar Odontologo por su Matricula");
-            System.out.println("4. Listar a Todos los Odontologos");
-            System.out.println("5. Actualizar Datos de un Odontologo");
-            System.out.println("6. Eliminar Odontologo");
+            System.out.println("Bienvenido al Menu de Odontólogos");
+            System.out.println("1. Crear Odontólogo");
+            System.out.println("2. Buscar Odontólogo por su ID");
+            System.out.println("3. Buscar Odontólogo por su Matricula");
+            System.out.println("4. Listar a Todos los Odontólogos");
+            System.out.println("5. Actualizar Datos de un Odontólogo");
+            System.out.println("6. Eliminar Odontólogo");
             System.out.println("0. Salir");
             System.out.print("Opción: ");
             opcion = scanner.nextInt();
@@ -48,7 +48,7 @@ public class VistaOdontologo {
     }
 
     private void registrar() {
-        System.out.println(" - Registrar Odontologo - ");
+        System.out.println(" - Registrar Odontólogo - ");
         System.out.println("Nombre: ");
         String nombre = scanner.nextLine();
         System.out.println("Apellido: ");
@@ -58,14 +58,14 @@ public class VistaOdontologo {
 
         try {
             Odontologo odontologo = controlador.registrar(nombre, apellido, matricula);
-            System.out.println("Odontologo registrado: " + odontologo);
+            System.out.println("Odontólogo registrado: " + odontologo);
         } catch (ClinicaException e) {
             System.out.println("Error: " + e.getMessage());
         }
     }
 
     private void buscarPorId() {
-        System.out.println(" - Buscar Odontologo por ID - ");
+        System.out.println(" - Buscar Odontólogo por ID - ");
         System.out.println("ID: ");
         Long id = scanner.nextLong();
         scanner.nextLine();
@@ -78,7 +78,7 @@ public class VistaOdontologo {
     }
 
     private void buscarPorMatricula() {
-        System.out.println(" - Buscar Odontologo por Matricula - ");
+        System.out.println(" - Buscar Odontólogo por Matricula - ");
         System.out.println("Matricula: ");
         String matricula = scanner.nextLine();
         try {
@@ -90,14 +90,14 @@ public class VistaOdontologo {
     }
 
     private void listar() {
-        System.out.println(" - Lista de Odontologos - ");
+        System.out.println(" - Lista de Odontólogos - ");
         List<Odontologo> odontologos = controlador.listarTodos();
         mostrarLista(odontologos);
     }
 
     private void actualizar() {
-        System.out.println(" - Actualizar Odontologo - ");
-        System.out.println("ID del odontologo: ");
+        System.out.println(" - Actualizar Odontólogo - ");
+        System.out.println("ID del odontólogo: ");
         Long id = scanner.nextLong();
         scanner.nextLine();
         System.out.println("Nombre: ");
@@ -109,28 +109,28 @@ public class VistaOdontologo {
 
         try {
             Odontologo odontologo = controlador.modificar(id, nombre, apellido, matricula);
-            System.out.println("Odontologo actualizado: " + odontologo);
+            System.out.println("Odontólogo actualizado: " + odontologo);
         } catch (ClinicaException e) {
             System.out.println("Error: " + e.getMessage());
         }
     }
 
     private void eliminar() {
-        System.out.println(" - Eliminar Odontologo - ");
-        System.out.println("ID del odontologo: ");
+        System.out.println(" - Eliminar Odontólogo - ");
+        System.out.println("ID del odontólogo: ");
         Long id = scanner.nextLong();
         scanner.nextLine();
         boolean eliminado = controlador.eliminarPorId(id);
         if (eliminado) {
-            System.out.println("Odontologo eliminado correctamente.");
+            System.out.println("Odontólogo eliminado correctamente.");
         } else {
-            System.out.println("No se encontró un odontologo con ese ID.");
+            System.out.println("No se encontró un odontólogo con ese ID.");
         }
     }
 
     private void mostrarLista(List<Odontologo> lista) {
         if (lista.isEmpty()) {
-            System.out.println("No hay odontologos registrados.");
+            System.out.println("No hay odontólogos registrados.");
             return;
         }
         for (Odontologo odontologo : lista) {

@@ -58,7 +58,7 @@ public class VistaTurno {
         System.out.println("ID del paciente: ");
         Long idPaciente = scanner.nextLong();
         scanner.nextLine();
-        System.out.println("ID del odontologo: ");
+        System.out.println("ID del odontólogo: ");
         Long idOdontologo = scanner.nextLong();
         scanner.nextLine();
         System.out.println("Fecha (YYYY-MM-DD): ");

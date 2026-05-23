@@ -17,8 +17,26 @@ public class ServicioPaciente {
     }
 
     public Paciente registrar(Paciente paciente) {
+        if (paciente == null) {
+            throw new DatoInvalidoException("Ingrese un valor, por favor");
+        }
+        if (paciente.getNombre() == null || paciente.getNombre().isEmpty()) {
+            throw new DatoInvalidoException("Ingrese un nombre valido, por favor");
+        }
+        if (paciente.getApellido() == null || paciente.getApellido().isEmpty()) {
+            throw new DatoInvalidoException("Ingrese un apellido valido, por favor");
+        }
         if (paciente.getDni() == null || paciente.getDni().isEmpty()) { // Se fija que haya algún dato
-            throw new DatoInvalidoException("Intente nuevamente, por favor: ");
+            throw new DatoInvalidoException("Ingrese un DNI valido, por favor: ");
+        }
+        if (!paciente.getDni().matches("\\d{7,8}")) {
+            throw new DatoInvalidoException("Ingrese un DNI valido, por favor");
+        }
+        if (paciente.getEmail() == null || paciente.getEmail().isEmpty()) {
+            throw new DatoInvalidoException("Ingrese un email valido, por favor");
+        }
+        if (!paciente.getEmail().contains("@") || !paciente.getEmail().contains(".")) {
+            throw new DatoInvalidoException("Ingrese un email valido, por favor");
         }
         Paciente existe = repositorio.buscarPorDni(paciente.getDni()); // el repositorio busca a ver si tiene ese dato guardado y lo guarda en una variable
         if (existe != null) { // Si tiene algo la variable, está duplicado
@@ -47,6 +65,21 @@ public class ServicioPaciente {
     }
 
     public Paciente modificar(Paciente paciente) {
+        if (paciente == null) {
+            throw new DatoInvalidoException("Ingrese un valor, por favor");
+        }
+        if (paciente.getNombre() == null || paciente.getNombre().isEmpty()) {
+            throw new DatoInvalidoException("Ingrese un nombre valido, por favor");
+        }
+        if (paciente.getApellido() == null || paciente.getApellido().isEmpty()) {
+            throw new DatoInvalidoException("Ingrese un apellido valido, por favor");
+        }
+        if (paciente.getEmail() == null || paciente.getEmail().isEmpty()) {
+            throw new DatoInvalidoException("Ingrese un email valido, por favor");
+        }
+        if (!paciente.getEmail().contains("@") || !paciente.getEmail().contains(".")) {
+            throw new DatoInvalidoException("Ingrese un email valido, por favor");
+        }
         buscarPorId(paciente.getId());
         return repositorio.actualizar(paciente);
     }

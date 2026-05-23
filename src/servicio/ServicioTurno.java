@@ -9,6 +9,7 @@ import repositorio.RepositorioOdontologo;
 import repositorio.RepositorioPaciente;
 import repositorio.RepositorioTurno;
 
+import excepcion.DatoInvalidoException;
 import excepcion.PacienteNoEncontradoException;
 import excepcion.OdontologoNoEncontradoException;
 import excepcion.TurnoYaReservadoException;
@@ -31,6 +32,12 @@ public class ServicioTurno {
     }
 
     public Turno reservar(Long idPaciente, Long idOdontologo, LocalDate fecha, LocalTime hora) {
+        if (fecha == null || hora == null) {
+            throw new DatoInvalidoException("La fecha y la hora no pueden ser nulas");
+        }
+        if (fecha.isBefore(LocalDate.now())) {
+            throw new DatoInvalidoException("La fecha del turno no puede ser anterior a hoy");
+        }
         Paciente paciente = repositorioPaciente.buscarPorId(idPaciente);
         if (paciente == null) {
             throw new PacienteNoEncontradoException("Paciente no encontrado");
@@ -69,6 +76,15 @@ public class ServicioTurno {
     }
 
     public Turno modificar(Turno turno) {
+        if (turno == null) {
+            throw new DatoInvalidoException("Ingrese un valor, por favor");
+        }
+        if (turno.getFecha() == null || turno.getHora() == null) {
+            throw new DatoInvalidoException("La fecha y la hora no pueden ser nulas");
+        }
+        if (turno.getFecha().isBefore(LocalDate.now())) {
+            throw new DatoInvalidoException("La fecha del turno no puede ser anterior a hoy");
+        }
         buscarPorId(turno.getId());
         return repositorioTurno.actualizar(turno);
     }

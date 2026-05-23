@@ -32,3 +32,9 @@ bin/
 
 ### Claude Code (local config) ###
 .claude/
+
+### Antigravity CLI (local config) ###
+.antigravitycli/
+
+### Docs (se manejan por fuera del repo) ###
+docs/

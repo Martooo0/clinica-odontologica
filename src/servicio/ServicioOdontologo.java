@@ -17,8 +17,17 @@ public class ServicioOdontologo {
     }
 
     public Odontologo registrar(Odontologo odontologo) {
-        if (odontologo.getMatricula() == null ||  odontologo.getMatricula().isEmpty()) {
-            throw new DatoInvalidoException("Intente nuevamente, por favor: ");
+        if (odontologo == null) {
+            throw new DatoInvalidoException("Ingrese un valor, por favor");
+        }
+        if (odontologo.getNombre() == null || odontologo.getNombre().isEmpty()) {
+            throw new DatoInvalidoException("Ingrese un nombre valido, por favor");
+        }
+        if (odontologo.getApellido() == null || odontologo.getApellido().isEmpty()) {
+            throw new DatoInvalidoException("Ingrese un apellido valido, por favor");
+        }
+        if (odontologo.getMatricula() == null || odontologo.getMatricula().isEmpty()) {
+            throw new DatoInvalidoException("Ingrese una matricula valida, por favor");
         }
         Odontologo existe = repositorio.buscarPorMatricula(odontologo.getMatricula());
         if (existe != null) {
@@ -44,6 +53,22 @@ public class ServicioOdontologo {
     }
 
     public Odontologo modificar(Odontologo odontologo) {
+        if (odontologo == null) {
+            throw new DatoInvalidoException("Ingrese un valor, por favor");
+        }
+        if (odontologo.getNombre() == null || odontologo.getNombre().isEmpty()) {
+            throw new DatoInvalidoException("Ingrese un nombre valido, por favor");
+        }
+        if (odontologo.getApellido() == null || odontologo.getApellido().isEmpty()) {
+            throw new DatoInvalidoException("Ingrese un apellido valido, por favor");
+        }
+        if (odontologo.getMatricula() == null || odontologo.getMatricula().isEmpty()) {
+            throw new DatoInvalidoException("Ingrese una matricula valida, por favor");
+        }
+        Odontologo conMismaMatricula = repositorio.buscarPorMatricula(odontologo.getMatricula());
+        if (conMismaMatricula != null && !conMismaMatricula.getId().equals(odontologo.getId())) {
+            throw new MatriculaDuplicadaException("La matricula ya pertenece a otro odontólogo");
+        }
         buscarPorId(odontologo.getId());
         return repositorio.actualizar(odontologo);
     }

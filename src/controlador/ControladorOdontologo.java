@@ -20,10 +20,9 @@ public class ControladorOdontologo {
     }
 
     public Odontologo modificar(Long id, String nombre, String apellido, String matricula) {
-        Odontologo odontologo = servicioOdontologo.buscarPorId(id);
-        odontologo.setNombre(nombre);
-        odontologo.setApellido(apellido);
-        odontologo.setMatricula(matricula); // Aca se cambia la matrícula, pero podría ser como el DNI también.
+        servicioOdontologo.buscarPorId(id); // valida que exista; lanza OdontologoNoEncontradoException si no
+        Odontologo odontologo = new Odontologo(nombre, apellido, matricula);
+        odontologo.setId(id);
         return servicioOdontologo.modificar(odontologo);
     }
 
