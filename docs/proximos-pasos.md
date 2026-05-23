@@ -1,8 +1,8 @@
 # Estado del TP — Clínica Odontológica
 
-> Última actualización: **22/05/2026 (noche)** — cierre de sesión antes de viaje.
+> Última actualización: **23/05/2026** — TP completo y funcionando, falta probar manualmente y pushear.
 >
-> **Entrega: martes 26/05/2026.** Martin se va de viaje el fin de semana con la notebook para seguir trabajando.
+> **Entrega: martes 26/05/2026.**
 >
 > Documento de contexto pensado para retomar el TP en otra sesión / otra PC sin tener que reconstruir todo desde cero.
 
@@ -16,17 +16,42 @@
 - **Capa Dominio (`src/dominio/`)** — 6 archivos: `EstadoTurno`, `Persona` (abstract), `Paciente`, `Odontologo`, `Domicilio`, `Turno`.
 - **Capa Excepciones (`src/excepcion/`)** — 8 archivos: `ClinicaException` (extends `RuntimeException`) + 7 hijas (`PacienteNoEncontradoException`, `OdontologoNoEncontradoException`, `TurnoYaReservadoException`, `TurnoNoEncontradoException`, `DatoInvalidoException`, `DniDuplicadoException`, `MatriculaDuplicadaException`).
 - **Capa Repositorios (`src/repositorio/`)** — 4 archivos: `IRepositorio<T>` + `RepositorioPaciente` + `RepositorioOdontologo` + `RepositorioTurno`. Commit: `06e4ed7`.
-- **Capa Servicios (`src/servicio/`)** — 3 archivos completos. Commit: `1898d7f`.
+- **Capa Servicios (`src/servicio/`)** — 3 archivos completos. Commit: `1898d7f`. Refactor para DI: ver más abajo.
   - `ServicioPaciente` — 6/6 métodos: `registrar`, `buscarPorId`, `buscarPorDni`, `modificar`, `eliminar`, `listarTodos`.
   - `ServicioOdontologo` — 6/6 métodos: ídem con matrícula y excepciones de odontólogo.
-  - `ServicioTurno` — 9/9 métodos: `reservar`, `buscarPorId`, `confirmar`, `cancelar`, `modificar`, `listarTodos`, `listarPorPaciente`, `listarPorOdontologo`, `listarPorFecha`.
-- **Main de prueba (`src/Main.java`)** — valida que Dominio compila e instancia. Es descartable.
+  - `ServicioTurno` — 10/10 métodos: `reservar`, `buscarPorId`, `confirmar`, `cancelar`, `modificar`, `eliminar` (agregado después), `listarTodos`, `listarPorPaciente`, `listarPorOdontologo`, `listarPorFecha`.
+- **Capa Controladores (`src/controlador/`)** — 3 archivos completos. Commit: `bbf6af4`.
+  - `ControladorPaciente` — 6 métodos, recibe `ServicioPaciente` por constructor. `registrar` arma `Domicilio` + `Paciente` desde Strings; `modificar` trae el paciente y pisa campos con setters (DNI no se modifica); `eliminarPorId` con try-catch devuelve boolean.
+  - `ControladorOdontologo` — 6 métodos. Detalle: `modificar` SÍ permite cambiar matrícula (no como DNI).
+  - `ControladorTurno` — 11 métodos. `reprogramar` y `cambiarEstado` siguen el patrón "buscar + setters + modificar".
+- **Capa Vista (`src/vista/`)** — 4 archivos completos. Commit: `c5f209a`.
+  - `VistaPaciente`, `VistaOdontologo`, `VistaTurno` — cada una con su menú (`mostrarMenu` público, resto de métodos privados). Usan `Scanner` compartido + `try-catch` sobre `ClinicaException` para mostrar errores amigables. `VistaTurno` además captura `DateTimeParseException` (parseo de fecha/hora) y `IllegalArgumentException` (parseo de enum).
+  - `MenuPrincipal` — orquestador: crea repositorios → servicios → controladores → vistas y muestra el menú raíz.
+- **Main definitivo (`src/Main.java`)** — `new MenuPrincipal().iniciar();`. El Main viejo (prueba del dominio) se borró.
 
-### 🔜 Después de cerrar `ServicioPaciente`
+### 🐛 Bug encontrado en test manual + refactor (23/05/2026)
 
-1. `ServicioOdontologo` — por analogía (más rápido, mismo patrón con `MatriculaDuplicadaException`/`OdontologoNoEncontradoException`).
-2. `ServicioTurno` — el más interesante, combina 3 repos. Regla clave: "no hay 2 turnos al mismo odontólogo a la misma hora" → `TurnoYaReservadoException`.
-3. **Controladores** → **Vistas** → **Main definitivo**.
+Al correr la app por primera vez, **al asignar un turno daba "Paciente no encontrado"** aunque el paciente sí estaba creado.
+
+Causa: cada servicio creaba su propia instancia de repositorio en el campo (`= new RepositorioPaciente()`). `ServicioPaciente` guardaba en su mapa, `ServicioTurno` buscaba en otro mapa distinto.
+
+Fix: refactor a inyección por constructor. `MenuPrincipal` crea **una sola instancia de cada repositorio** y la pasa a los servicios. Cambios:
+
+- `ServicioPaciente`, `ServicioOdontologo` ahora reciben su repo por constructor.
+- `ServicioTurno` recibe los 3 repos por constructor.
+- `MenuPrincipal` arma toda la cadena de dependencias: 3 repos → 3 servicios → 3 controladores → 3 vistas.
+
+Esto era lo que decía la nota original del doc: "Composición vía atributo, inicializado en el campo... Más adelante se va a pasar por constructor / inyección. Por ahora simple." Llegamos a "más adelante".
+
+### ✅ Estado: TP COMPLETO Y FUNCIONANDO
+
+Probado end-to-end con un flujo realista (crear paciente → buscar por ID/DNI → listar → actualizar → crear odontólogo → asignar turno → cambiar estado). Todo OK.
+
+### 🔜 Lo que queda
+
+1. **Probar manualmente** en la PC (correr con `java -cp out Main` desde IntelliJ o desde consola).
+2. **Pushear** una vez que esté todo verificado.
+3. **Entregar** martes 26/05/2026.
 
 ---
 

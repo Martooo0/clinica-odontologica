@@ -10,7 +10,11 @@ import java.util.List;
 
 public class ServicioPaciente {
 
-    private RepositorioPaciente repositorio = new RepositorioPaciente();
+    private RepositorioPaciente repositorio;
+
+    public ServicioPaciente(RepositorioPaciente repositorio) {
+        this.repositorio = repositorio;
+    }
 
     public Paciente registrar(Paciente paciente) {
         if (paciente.getDni() == null || paciente.getDni().isEmpty()) { // Se fija que haya algún dato

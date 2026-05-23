@@ -3,6 +3,9 @@ package vista;
 import controlador.ControladorOdontologo;
 import controlador.ControladorPaciente;
 import controlador.ControladorTurno;
+import repositorio.RepositorioOdontologo;
+import repositorio.RepositorioPaciente;
+import repositorio.RepositorioTurno;
 import servicio.ServicioOdontologo;
 import servicio.ServicioPaciente;
 import servicio.ServicioTurno;
@@ -19,9 +22,13 @@ public class MenuPrincipal {
     public MenuPrincipal() {
         this.scanner = new Scanner(System.in);
 
-        ServicioPaciente servicioPaciente = new ServicioPaciente();
-        ServicioOdontologo servicioOdontologo = new ServicioOdontologo();
-        ServicioTurno servicioTurno = new ServicioTurno();
+        RepositorioPaciente repositorioPaciente = new RepositorioPaciente();
+        RepositorioOdontologo repositorioOdontologo = new RepositorioOdontologo();
+        RepositorioTurno repositorioTurno = new RepositorioTurno();
+
+        ServicioPaciente servicioPaciente = new ServicioPaciente(repositorioPaciente);
+        ServicioOdontologo servicioOdontologo = new ServicioOdontologo(repositorioOdontologo);
+        ServicioTurno servicioTurno = new ServicioTurno(repositorioTurno, repositorioPaciente, repositorioOdontologo);
 
         ControladorPaciente controladorPaciente = new ControladorPaciente(servicioPaciente);
         ControladorOdontologo controladorOdontologo = new ControladorOdontologo(servicioOdontologo);

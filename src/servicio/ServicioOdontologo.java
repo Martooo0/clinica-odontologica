@@ -10,7 +10,11 @@ import java.util.List;
 
 public class ServicioOdontologo {
 
-    private RepositorioOdontologo repositorio = new RepositorioOdontologo();
+    private RepositorioOdontologo repositorio;
+
+    public ServicioOdontologo(RepositorioOdontologo repositorio) {
+        this.repositorio = repositorio;
+    }
 
     public Odontologo registrar(Odontologo odontologo) {
         if (odontologo.getMatricula() == null ||  odontologo.getMatricula().isEmpty()) {

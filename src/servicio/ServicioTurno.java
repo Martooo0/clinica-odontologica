@@ -20,9 +20,15 @@ import java.time.LocalTime;
 
 public class ServicioTurno {
 
-    private RepositorioTurno repositorioTurno = new RepositorioTurno();
-    private RepositorioPaciente repositorioPaciente = new RepositorioPaciente();
-    private RepositorioOdontologo repositorioOdontologo = new RepositorioOdontologo();
+    private RepositorioTurno repositorioTurno;
+    private RepositorioPaciente repositorioPaciente;
+    private RepositorioOdontologo repositorioOdontologo;
+
+    public ServicioTurno(RepositorioTurno repositorioTurno, RepositorioPaciente repositorioPaciente, RepositorioOdontologo repositorioOdontologo) {
+        this.repositorioTurno = repositorioTurno;
+        this.repositorioPaciente = repositorioPaciente;
+        this.repositorioOdontologo = repositorioOdontologo;
+    }
 
     public Turno reservar(Long idPaciente, Long idOdontologo, LocalDate fecha, LocalTime hora) {
         Paciente paciente = repositorioPaciente.buscarPorId(idPaciente);
