@@ -6,6 +6,8 @@ import excepcion.DatoInvalidoException;
 import excepcion.PacienteNoEncontradoException;
 import repositorio.RepositorioPaciente;
 
+import java.util.List;
+
 public class ServicioPaciente {
 
     private RepositorioPaciente repositorio = new RepositorioPaciente();
@@ -35,9 +37,22 @@ public class ServicioPaciente {
         }
         Paciente paciente = repositorio.buscarPorDni(dniPaciente); // Busca el id en repositorio y lo guarda en una variable
         if (paciente == null) { // Si no hay nada, tira error, si no, lo guarda
-            throw new PacienteNoEncontradoException("El paciente no esta en el sistema, intente con otro: ");
+            throw new PacienteNoEncontradoException("El paciente no está en el sistema, intente con otro: ");
         }
         return paciente;
     }
 
+    public Paciente modificar(Paciente paciente) {
+        buscarPorId(paciente.getId());
+        return repositorio.actualizar(paciente);
+    }
+
+    public void eliminar(Long id) {
+        buscarPorId(id);
+        repositorio.eliminar(id);
+    }
+
+    public List<Paciente> listarTodos() {
+        return repositorio.buscarTodos();
+    }
 }
