@@ -50,4 +50,8 @@ public class ControladorPaciente {
     public List<Paciente> listarTodos() {
         return servicioPaciente.listarTodos();
     }
+
+    public List<Paciente> listarOrdenadosPorApellido() {
+        return servicioPaciente.listarOrdenadosPorApellido();
+    }
 }

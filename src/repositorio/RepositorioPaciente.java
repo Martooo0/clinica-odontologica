@@ -43,10 +43,9 @@ public class RepositorioPaciente implements IRepositorio<Paciente> {
     }
 
     public Paciente buscarPorDni(String dni){
-        for (Paciente p : pacientes.values()){
-            if (p.getDni().equals(dni)){
-                return p;
-            }
-        } return null;
+        return pacientes.values().stream()
+                .filter(p -> p.getDni().equals(dni))
+                .findFirst()
+                .orElse(null);
     }
 }

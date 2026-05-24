@@ -41,11 +41,9 @@ public class RepositorioOdontologo implements IRepositorio<Odontologo> {
     }
 
     public Odontologo buscarPorMatricula(String matricula) {
-        for (Odontologo o : odontologos.values()) {
-            if (o.getMatricula().equals(matricula)) {
-                return o;
-            }
-        } return null;
+        return odontologos.values().stream()
+                .filter(o -> o.getMatricula().equals(matricula))
+                .findFirst()
+                .orElse(null);
     }
-
 }

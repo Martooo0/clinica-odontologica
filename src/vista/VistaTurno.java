@@ -30,9 +30,11 @@ public class VistaTurno {
             System.out.println("2. Buscar Turno por ID");
             System.out.println("3. Listar Todos los Turnos");
             System.out.println("4. Listar Turnos por Paciente");
-            System.out.println("5. Cambiar Estado del Turno");
-            System.out.println("6. Reprogramar Turno");
-            System.out.println("7. Eliminar Turno");
+            System.out.println("5. Listar Turnos Por Odontólogo");
+            System.out.println("6. Cambiar Estado del Turno");
+            System.out.println("7. Reprogramar Turno");
+            System.out.println("8. Ver Turnos en un Rango de Fechas");
+            System.out.println("9. Eliminar Turno");
             System.out.println("0. Salir");
             System.out.print("Opción: ");
             opcion = scanner.nextInt();
@@ -43,9 +45,11 @@ public class VistaTurno {
                 case 2: buscarPorId(); break;
                 case 3: listar(); break;
                 case 4: listarPorPaciente(); break;
-                case 5: cambiarEstado(); break;
-                case 6: reprogramar(); break;
-                case 7: eliminar(); break;
+                case 5: listarPorOdontologo(); break;
+                case 6: cambiarEstado(); break;
+                case 7: reprogramar(); break;
+                case 8: listarPorRangoFechas(); break;
+                case 9: eliminar(); break;
                 case 0: break;
                 default:
                     System.out.println("Opción Invalida");
@@ -106,6 +110,15 @@ public class VistaTurno {
         mostrarLista(turnos);
     }
 
+    private void listarPorOdontologo() {
+        System.out.println(" - Turnos por Odontólogo - ");
+        System.out.println("ID del Odontólogo: ");
+        Long idOdontologo = scanner.nextLong();
+        scanner.nextLine();
+        List<Turno> turnos = controlador.listarPorOdontologo(idOdontologo);
+        mostrarLista(turnos);
+    }
+
     private void cambiarEstado() {
         System.out.println(" - Cambiar Estado del Turno - ");
         System.out.println("ID del turno: ");
@@ -146,6 +159,24 @@ public class VistaTurno {
             System.out.println("Error: Formato de fecha u hora invalido.");
         }
     }
+
+    private void listarPorRangoFechas() {
+        System.out.println(" - Ver Turnos en un Rango de Fechas - ");
+        System.out.println(" Fecha Desde (YYYY-MM-DD): ");
+        String desde = scanner.nextLine();
+        System.out.println(" Fecha Hasta (YYYY-MM-DD): ");
+        String hasta = scanner.nextLine();
+
+        try {
+            LocalDate fechaDesde = LocalDate.parse(desde);
+            LocalDate fechaHasta = LocalDate.parse(hasta);
+            List<Turno> turnos = controlador.listarPorRangoFechas(fechaDesde, fechaHasta);
+            mostrarLista(turnos);
+        } catch (DateTimeParseException e) {
+            System.out.println("Error: Formato de fecha invalido.");
+        }
+    }
+
 
     private void eliminar() {
         System.out.println(" - Eliminar Turno - ");

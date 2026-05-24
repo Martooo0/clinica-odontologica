@@ -110,5 +110,7 @@ public class ServicioTurno {
         return repositorioTurno.buscarPorFecha(fecha);
     }
 
-
+    public List<Turno> listarPorRangoFechas(LocalDate desde, LocalDate hasta) {
+        return repositorioTurno.buscarPorRangoFechas(desde, hasta);
+    }
 }

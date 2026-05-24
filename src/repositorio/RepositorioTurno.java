@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class RepositorioTurno implements IRepositorio<Turno> {
 
@@ -42,32 +43,26 @@ public class RepositorioTurno implements IRepositorio<Turno> {
     }
 
     public List<Turno> buscarPorPaciente(Long idPaciente) {
-        List<Turno> resultado = new ArrayList<>();
-        for (Turno t : turnos.values()) {
-            if (t.getPaciente().getId().equals(idPaciente)) {
-                resultado.add(t);
-            }
-        }
-        return resultado;
+        return turnos.values().stream()
+                .filter(t -> t.getPaciente().getId().equals(idPaciente))
+                .collect(Collectors.toList());
     }
 
     public List<Turno> buscarPorOdontologo(Long idOdontologo) {
-        List<Turno> resultado = new ArrayList<>();
-        for (Turno t : turnos.values()) {
-            if (t.getOdontologo().getId().equals(idOdontologo)) {
-                resultado.add(t);
-            }
-        }
-        return resultado;
+        return turnos.values().stream()
+                .filter(t -> t.getOdontologo().getId().equals(idOdontologo))
+                .collect(Collectors.toList());
     }
 
     public List<Turno> buscarPorFecha(LocalDate fecha) {
-        List<Turno> resultado = new ArrayList<>();
-        for (Turno t : turnos.values()) {
-            if (t.getFecha().equals(fecha)) {
-                resultado.add(t);
-            }
-        }
-        return resultado;
+        return turnos.values().stream()
+                .filter(t -> t.getFecha().equals(fecha))
+                .collect(Collectors.toList());
+    }
+
+    public List<Turno> buscarPorRangoFechas(LocalDate desde, LocalDate hasta) {
+        return turnos.values().stream()
+                .filter(t -> !t.getFecha().isBefore(desde) && !t.getFecha().isAfter(hasta))
+                .collect(Collectors.toList());
     }
 }

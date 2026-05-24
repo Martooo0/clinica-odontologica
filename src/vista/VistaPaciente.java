@@ -26,8 +26,9 @@ public class VistaPaciente {
             System.out.println("2. Buscar Paciente por su ID");
             System.out.println("3. Buscar Paciente por su DNI");
             System.out.println("4. Listar a Todos los Pacientes");
-            System.out.println("5. Actualizar Datos de un Paciente");
-            System.out.println("6. Eliminar Paciente");
+            System.out.println("5. Listar a los Pacientes por su Apellido");
+            System.out.println("6. Actualizar Datos de un Paciente");
+            System.out.println("7. Eliminar Paciente");
             System.out.println("0. Salir");
             System.out.print("Opción: ");
             opcion = scanner.nextInt();
@@ -38,8 +39,9 @@ public class VistaPaciente {
                 case 2: buscarPorId(); break;
                 case 3: buscarPorDni(); break;
                 case 4: listar(); break;
-                case 5: actualizar(); break;
-                case 6: eliminar ();  break;
+                case 5: listarOrdenados(); break;
+                case 6: actualizar(); break;
+                case 7: eliminar ();  break;
                 case 0: break;
                 default:
                     System.out.println("Opción Invalida");
@@ -104,6 +106,12 @@ public class VistaPaciente {
     private void listar() {
         System.out.println(" - Lista de Pacientes - ");
         List<Paciente> pacientes = controlador.listarTodos();
+        mostrarLista(pacientes);
+    }
+
+    private void listarOrdenados() {
+        System.out.println(" - Pacientes ordenados por apellido - ");
+        List<Paciente> pacientes = controlador.listarOrdenadosPorApellido();
         mostrarLista(pacientes);
     }
 

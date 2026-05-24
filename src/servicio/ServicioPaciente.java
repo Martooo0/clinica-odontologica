@@ -7,6 +7,7 @@ import excepcion.PacienteNoEncontradoException;
 import repositorio.RepositorioPaciente;
 
 import java.util.List;
+import java.util.Collections;
 
 public class ServicioPaciente {
 
@@ -92,4 +93,12 @@ public class ServicioPaciente {
     public List<Paciente> listarTodos() {
         return repositorio.buscarTodos();
     }
+
+    public List<Paciente> listarOrdenadosPorApellido() {
+        List<Paciente> pacientes = repositorio.buscarTodos();
+        Collections.sort(pacientes);
+        return pacientes;
+    }
+
+
 }

@@ -62,6 +62,10 @@ public class ControladorTurno {
         return servicioTurno.listarPorFecha(fecha);
     }
 
+    public List<Turno> listarPorRangoFechas(LocalDate desde, LocalDate hasta) {
+        return servicioTurno.listarPorRangoFechas(desde, hasta);
+    }
+
     public boolean eliminarPorId(Long id) {
         try {
             servicioTurno.eliminar(id);
