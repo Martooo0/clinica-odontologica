@@ -2,7 +2,7 @@ package dominio;
 
 import java.time.LocalDate;
 
-public class Paciente extends Persona implements  Comparable<Paciente>{
+public class Paciente extends Persona implements Comparable<Paciente>{
 
     private String dni;
     private String email;

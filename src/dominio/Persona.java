@@ -44,7 +44,7 @@ public abstract class Persona {
 
     @Override
     public String toString() {
-        return getNombreCompleto();
+        return "[id=" + id + "] " + getNombreCompleto();
     }
 
 
