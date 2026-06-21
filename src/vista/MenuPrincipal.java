@@ -42,9 +42,9 @@ public class MenuPrincipal {
     public void iniciar() {
         int opcion;
         do {
-            System.out.println("\n=== Clinica Odontologica ===");
+            System.out.println("\n=== Clínica Odontológica ===");
             System.out.println("1. Gestionar Pacientes");
-            System.out.println("2. Gestionar Odontologos");
+            System.out.println("2. Gestionar Odontólogos");
             System.out.println("3. Gestionar Turnos");
             System.out.println("0. Salir");
             System.out.print("Opción: ");

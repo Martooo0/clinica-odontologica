@@ -46,4 +46,13 @@ public class RepositorioOdontologo implements IRepositorio<Odontologo> {
                 .findFirst()
                 .orElse(null);
     }
+
+    public Odontologo bm(String matricula) {
+        for (Odontologo odontologo : odontologos.values()) {
+            if (odontologo.getMatricula().equals(matricula)) {
+                return odontologo;
+            }
+        }
+        return null;
+    }
 }
