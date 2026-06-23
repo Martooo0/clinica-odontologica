@@ -1,0 +1,3 @@
+1;Martin;Ferreira;46625515;martinferreira009@gmail.com;2026-06-23;Jorge Newbery;92;Florencio Varela;Buenos Aires
+3;Franco;Moran;4371231;hola@gmail.com;2026-06-23;Jorge Newbery;98;Belgrano;Buenos Aires
+4;Lorenzo;Graglia;48124390;lologaga@gmail.com;2026-06-23;Moreno;1084;Quilmes;Santa Fe

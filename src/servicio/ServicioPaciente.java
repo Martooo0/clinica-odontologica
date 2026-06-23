@@ -99,6 +99,4 @@ public class ServicioPaciente {
         Collections.sort(pacientes);
         return pacientes;
     }
-
-
 }

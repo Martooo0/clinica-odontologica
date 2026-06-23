@@ -75,6 +75,15 @@ public class ServicioTurno {
         return repositorioTurno.actualizar(turno);
     }
 
+    public Turno cambiarEstado(Long idTurno, EstadoTurno estado) {
+        if (estado == null) {
+            throw new DatoInvalidoException("Seleccione un estado válido");
+        }
+        Turno turno = buscarPorId(idTurno);
+        turno.setEstado(estado);
+        return repositorioTurno.actualizar(turno); // no valida la fecha: cambiar el estado de un turno pasado es válido
+    }
+
     public Turno modificar(Turno turno) {
         if (turno == null) {
             throw new DatoInvalidoException("Ingrese un valor, por favor");

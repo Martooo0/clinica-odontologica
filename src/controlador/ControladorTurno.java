@@ -37,9 +37,7 @@ public class ControladorTurno {
     }
 
     public Turno cambiarEstado(Long idTurno, EstadoTurno nuevoEstado) {
-        Turno turno = servicioTurno.buscarPorId(idTurno);
-        turno.setEstado(nuevoEstado);
-        return servicioTurno.modificar(turno);
+        return servicioTurno.cambiarEstado(idTurno, nuevoEstado);
     }
 
     public Turno buscarPorId(Long idTurno) {
