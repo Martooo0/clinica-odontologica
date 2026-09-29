@@ -11,10 +11,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-/**
- * Ventana de gestión de Odontólogos. Misma plantilla que Pacientes, más simple
- * (menos campos y SIN domicilio). Acá la matrícula SÍ se puede modificar.
- */
 public class VentanaOdontologo extends JFrame {
 
     private final ControladorOdontologo controladorOdontologo;

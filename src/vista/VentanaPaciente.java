@@ -191,7 +191,6 @@ public class VentanaPaciente extends JFrame {
         }
     }
 
-    // ---------------- Apoyo ----------------
     private void refrescarTabla() {
         modelo.setRowCount(0); // vacío la tabla y la vuelvo a llenar desde cero
         List<Paciente> pacientes = controladorPaciente.listarTodos();

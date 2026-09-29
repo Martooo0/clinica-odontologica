@@ -15,14 +15,6 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-/**
- * Ventana principal de la aplicación (menú con botones).
- *
- * Cumple además dos roles del sistema:
- *  - PUNTO DE COMPOSICIÓN: arma toda la cadena repos -> servicios -> controladores
- *    (lo que antes hacía MenuPrincipal en la versión de consola).
- *  - CICLO DE VIDA: carga los datos desde archivo al abrir y los guarda al cerrar.
- */
 public class VentanaPrincipal extends JFrame {
 
     // Guardo los repos como campos para poder volcarlos a archivo cuando se cierra la app
@@ -40,7 +32,7 @@ public class VentanaPrincipal extends JFrame {
         repositorioOdontologo = new RepositorioOdontologo();
         repositorioTurno = new RepositorioTurno();
 
-        // Cargo los archivos, con un ordenn especifico: pacientes y odontólogos primero porque los turnos tienen que saber que existan para no tener problemas con los IDs.
+        // Cargo los archivos con un orden especifico: pacientes y odontólogos primero porque los turnos tienen que saber que existan para no tener problemas con los IDs.
         repositorioPaciente.cargar();
         repositorioOdontologo.cargar();
         repositorioTurno.cargar(repositorioPaciente, repositorioOdontologo);
@@ -59,12 +51,12 @@ public class VentanaPrincipal extends JFrame {
     }
 
     private void configurarVentana() {
-        setTitle("Clínica Odontológica \"Sonrisa Feliz\"");
+        setTitle("Clínica Odontológica");
         setSize(420, 360);
         setLocationRelativeTo(null);                       // centra la ventana en la pantalla
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);    // la X cierra la app
 
-        // Antes de salir, guardo todo a archivo (guardado automático al cerrar)
+        // Antes de salir, guardo a archivo (guardado automático al cerrar)
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {

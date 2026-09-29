@@ -19,13 +19,6 @@ import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
-/**
- * Ventana de gestión de Turnos.
- * Novedad respecto a las otras: usa JComboBox para elegir el paciente y el
- * odontólogo (de los que ya existen), y campos de texto para fecha y hora.
- * Necesita los 3 controladores: el de turnos para operar, y los de paciente/
- * odontólogo para llenar los combos.
- */
 public class VentanaTurno extends JFrame {
 
     private final ControladorTurno controladorTurno;
@@ -38,8 +31,7 @@ public class VentanaTurno extends JFrame {
     private JTextField txtHora;
     private JComboBox<EstadoTurno> comboEstado;
 
-    // Listas en paralelo a los combos: la posición del combo coincide con la de estas listas,
-    // así recupero el objeto real a partir del índice seleccionado (sin renderer ni clases internas).
+    // Listas en paralelo a los combos: la posición del combo coincide con la de estas listas, así recupero el objeto real a partir del índice seleccionado (sin renderer ni clases internas).
     private List<Paciente> pacientes;
     private List<Odontologo> odontologos;
 

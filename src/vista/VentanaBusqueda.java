@@ -11,11 +11,6 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-/**
- * Ventana de Búsquedas. Permite filtrar pacientes u odontólogos en vivo:
- * a medida que se escribe en el campo de texto, la tabla se va achicando.
- * Novedad: usa un KeyListener (escucha el teclado) para refiltrar en cada tecla.
- */
 public class VentanaBusqueda extends JFrame {
 
     private final ControladorPaciente controladorPaciente;
@@ -49,7 +44,7 @@ public class VentanaBusqueda extends JFrame {
         panel.setBorder(BorderFactory.createTitledBorder("Buscar"));
 
         comboTipo = new JComboBox<>(new String[]{"Pacientes", "Odontólogos"});
-        // Si cambia el tipo, re-armo la tabla con las columnas correctas
+        // Si cambia el tipo, rearmo la tabla con las columnas correctas
         comboTipo.addActionListener(e -> actualizar());
 
         txtBuscar = new JTextField(22);
@@ -81,10 +76,6 @@ public class VentanaBusqueda extends JFrame {
         return scroll;
     }
 
-    /**
-     * Vuelve a armar la tabla según el tipo elegido y el texto escrito.
-     * Se llama desde el combo (cambió el tipo) y desde el KeyListener (cambió el texto).
-     */
     private void actualizar() {
         String tipo = (String) comboTipo.getSelectedItem();
         String texto = txtBuscar.getText().trim().toLowerCase();
