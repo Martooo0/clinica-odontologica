@@ -1,43 +1,34 @@
 package controlador;
 
 import dominio.Odontologo;
-import excepcion.OdontologoNoEncontradoException;
 import servicio.ServicioOdontologo;
 
 import java.util.List;
 
-public class ControladorOdontologo {
+public class ControladorOdontologo extends ControladorObservable {
 
-    private ServicioOdontologo servicioOdontologo;
+    private final ServicioOdontologo servicioOdontologo;
 
     public ControladorOdontologo(ServicioOdontologo servicioOdontologo){
+        super(servicioOdontologo);
         this.servicioOdontologo = servicioOdontologo;
     }
 
     public Odontologo registrar(String nombre, String apellido, String matricula) {
-        Odontologo odontologo = new Odontologo(nombre, apellido, matricula);
-        return servicioOdontologo.registrar(odontologo);
+        return servicioOdontologo.registrar(new Odontologo(nombre, apellido, matricula));
     }
 
     public Odontologo modificar(Long id, String nombre, String apellido, String matricula) {
-        servicioOdontologo.buscarPorId(id); // valida que exista; lanza OdontologoNoEncontradoException si no
-        Odontologo odontologo = new Odontologo(nombre, apellido, matricula);
-        odontologo.setId(id);
-        return servicioOdontologo.modificar(odontologo);
+        Odontologo cambios = new Odontologo(nombre, apellido, matricula);
+        cambios.setId(id);
+        return servicioOdontologo.modificar(cambios);
     }
 
-    public boolean eliminarPorId(Long id) {
-        try {
-            servicioOdontologo.eliminar(id);
-        } catch (OdontologoNoEncontradoException e) {
-            return false;
-        }
-        return true;
+    public void eliminar(Long id) {
+        servicioOdontologo.eliminar(id);
     }
 
     public Odontologo buscarPorId(Long id) { return servicioOdontologo.buscarPorId(id); }
-
-    public Odontologo buscarPorMatricula(String matricula) { return servicioOdontologo.buscarPorMatricula(matricula); }
 
     public List<Odontologo> listarTodos() { return servicioOdontologo.listarTodos();}
 }

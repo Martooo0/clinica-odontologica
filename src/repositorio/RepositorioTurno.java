@@ -4,135 +4,80 @@ import dominio.Turno;
 import dominio.Paciente;
 import dominio.Odontologo;
 import dominio.EstadoTurno;
+import dominio.Tratamiento;
 
-import java.io.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
-public class RepositorioTurno implements IRepositorio<Turno> {
+public class RepositorioTurno extends RepositorioBase<Turno> {
 
-    private Map<Long, Turno> turnos = new HashMap<>();
-    private Long contadorId = 0L;
     private static final String ARCHIVO = "turnos.txt";
-    private static final String SEP = ";";
+    private static final int ID = 0;
+    private static final int PACIENTE = 1;
+    private static final int ODONTOLOGO = 2;
+    private static final int FECHA = 3;
+    private static final int HORA = 4;
+    private static final int ESTADO = 5;
+    private static final int TRATAMIENTO = 6;
 
-    @Override
-    public Turno guardar(Turno entidad) {
-        entidad.setId(++contadorId);
-        turnos.put(entidad.getId(), entidad);
-        return entidad;
-    }
+    private final RepositorioPaciente repositorioPaciente;
+    private final RepositorioOdontologo repositorioOdontologo;
+    private final RepositorioTratamiento repositorioTratamiento;
 
-    @Override
-    public Turno buscarPorId(Long id) {
-        return turnos.get(id);
-    }
-
-    @Override
-    public List<Turno> buscarTodos() {
-        return new ArrayList<>(turnos.values());
-    }
-
-    @Override
-    public Turno actualizar(Turno entidad) {
-        turnos.put(entidad.getId(), entidad);
-        return entidad;
-    }
-
-    @Override
-    public void eliminar(Long id) {
-        turnos.remove(id);
+    public RepositorioTurno(RepositorioPaciente repositorioPaciente, RepositorioOdontologo repositorioOdontologo,
+                            RepositorioTratamiento repositorioTratamiento) {
+        this.repositorioPaciente = repositorioPaciente;
+        this.repositorioOdontologo = repositorioOdontologo;
+        this.repositorioTratamiento = repositorioTratamiento;
     }
 
     public List<Turno> buscarPorPaciente(Long idPaciente) {
-        return turnos.values().stream()
-                .filter(t -> t.getPaciente().getId().equals(idPaciente))
-                .collect(Collectors.toList());
+        return filtrar(turno -> turno.getPaciente().getId().equals(idPaciente));
     }
 
     public List<Turno> buscarPorOdontologo(Long idOdontologo) {
-        return turnos.values().stream()
-                .filter(t -> t.getOdontologo().getId().equals(idOdontologo))
-                .collect(Collectors.toList());
+        return filtrar(turno -> turno.getOdontologo().getId().equals(idOdontologo));
     }
 
-    public List<Turno> buscarPorFecha(LocalDate fecha) {
-        return turnos.values().stream()
-                .filter(t -> t.getFecha().equals(fecha))
-                .collect(Collectors.toList());
+    public List<Turno> buscarPorTratamiento(Long idTratamiento) {
+        return filtrar(turno -> turno.getTratamiento() != null && turno.getTratamiento().getId().equals(idTratamiento));
     }
 
-    public List<Turno> buscarPorRangoFechas(LocalDate desde, LocalDate hasta) {
-        return turnos.values().stream()
-                .filter(t -> !t.getFecha().isBefore(desde) && !t.getFecha().isAfter(hasta))
-                .collect(Collectors.toList());
+    public List<Turno> buscarPorEstado(EstadoTurno estado) {
+        return filtrar(turno -> turno.getEstado() == estado);
     }
 
-    public void guardarTodos() {
-        FileWriter fw = null;
-        PrintWriter pw = null;
-        try {
-            fw = new FileWriter(ARCHIVO);
-            pw = new PrintWriter(fw);
-            for (Turno t : turnos.values()) {
-                // Guardo los IDs de paciente y odontólogo, NO los objetos enteros (para no duplicar datos... no sé si está bien)
-                pw.println(t.getId() + SEP + t.getPaciente().getId() + SEP + t.getOdontologo().getId()
-                        + SEP + t.getFecha() + SEP + t.getHora() + SEP + t.getEstado().name());
-            }
-        } catch (IOException e) {
-            System.err.println("Error al guardar turnos: " + e.getMessage());
-        } finally {
-            if (pw != null) pw.close();
+    @Override
+    protected String getArchivo() {
+        return ARCHIVO;
+    }
+
+    @Override
+    protected String serializar(Turno turno) {
+        Object idTratamiento = turno.getTratamiento() == null ? VACIO : turno.getTratamiento().getId();
+        return unir(turno.getId(), turno.getPaciente().getId(), turno.getOdontologo().getId(),
+                turno.getFecha(), turno.getHora(), turno.getEstado().name(), idTratamiento);
+    }
+
+    @Override
+    protected Turno parsearLinea(String[] partes) {
+        // Convierto los IDs de vuelta en objetos pidiéndolos a los otros repos
+        Paciente paciente = repositorioPaciente.buscarPorId(Long.parseLong(partes[PACIENTE]));
+        Odontologo odontologo = repositorioOdontologo.buscarPorId(Long.parseLong(partes[ODONTOLOGO]));
+
+        // Si el paciente u odontólogo ya no existen, descarto el turno (no apunta a nada)
+        if (paciente == null || odontologo == null) return null;
+
+        Tratamiento tratamiento = null;
+        if (partes.length > TRATAMIENTO && !partes[TRATAMIENTO].equals(VACIO)) {
+            tratamiento = repositorioTratamiento.buscarPorId(Long.parseLong(partes[TRATAMIENTO]));
         }
-    }
 
-    // Recibe los otros dos repos para poder resolver los IDs a objetos reales
-    public void cargar(RepositorioPaciente repositorioPaciente, RepositorioOdontologo repositorioOdontologo) {
-        File archivo = new File(ARCHIVO);
-        if (!archivo.exists()) return;
-
-        FileReader fr = null;
-        BufferedReader br = null;
-        try {
-            fr = new FileReader(ARCHIVO);
-            br = new BufferedReader(fr);
-            String linea;
-            while ((linea = br.readLine()) != null) {
-                if (linea.trim().isEmpty()) continue;
-                String[] partes = linea.split(SEP);
-
-                // Convierto los IDs de vuelta en objetos pidiéndolos a los otros repos
-                Paciente paciente = repositorioPaciente.buscarPorId(Long.parseLong(partes[1]));
-                Odontologo odontologo = repositorioOdontologo.buscarPorId(Long.parseLong(partes[2]));
-
-                // Si el paciente u odontólogo ya no existen, descarto el turno (no apunta a nada)
-                if (paciente == null || odontologo == null) continue;
-
-                Turno turno = new Turno(LocalDate.parse(partes[3]), LocalTime.parse(partes[4]), paciente, odontologo);
-                turno.setId(Long.parseLong(partes[0]));
-                turno.setEstado(EstadoTurno.valueOf(partes[5])); // pisa el PENDIENTE del constructor
-
-                turnos.put(turno.getId(), turno);
-
-                if (turno.getId() > contadorId) {
-                    contadorId = turno.getId();
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("Error al leer turnos: " + e.getMessage());
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    System.err.println("Error al cerrar el archivo: " + e.getMessage());
-                }
-            }
-        }
+        Turno turno = new Turno(LocalDate.parse(partes[FECHA]), LocalTime.parse(partes[HORA]),
+                paciente, odontologo, tratamiento);
+        turno.setId(Long.parseLong(partes[ID]));
+        turno.setEstado(EstadoTurno.valueOf(partes[ESTADO])); // pisa el PENDIENTE del constructor
+        return turno;
     }
 }

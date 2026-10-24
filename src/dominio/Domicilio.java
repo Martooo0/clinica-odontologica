@@ -2,7 +2,6 @@ package dominio;
 
 public class Domicilio {
 
-    private Long id;
     private String calle;
     private String numero;
     private String localidad;
@@ -16,10 +15,6 @@ public class Domicilio {
     }
 
     public Domicilio() {}
-
-    public Long getId() {
-        return id;
-    }
 
     public String getCalle() {
         return calle;
@@ -35,10 +30,6 @@ public class Domicilio {
 
     public String getProvincia() {
         return provincia;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public void setCalle(String calle) {

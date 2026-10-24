@@ -1,10 +1,10 @@
 package dominio;
 
-public abstract class Persona {
+public abstract class Persona implements Identificable {
 
-    protected Long id;
-    protected String nombre;
-    protected String apellido;
+    private Long id;
+    private String nombre;
+    private String apellido;
 
     public Persona() {}
 
@@ -14,6 +14,7 @@ public abstract class Persona {
         this.apellido = apellido;
     }
 
+    @Override
     public Long getId() {
         return id;
     }
@@ -26,6 +27,7 @@ public abstract class Persona {
         return apellido;
     }
 
+    @Override
     public void setId(Long id) {
         this.id = id;
     }

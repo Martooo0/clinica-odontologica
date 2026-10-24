@@ -2,23 +2,34 @@ package controlador;
 
 import dominio.EstadoTurno;
 import dominio.Turno;
-import excepcion.TurnoNoEncontradoException;
+import dto.SolicitudTurno;
+import excepcion.DatoInvalidoException;
 import servicio.ServicioTurno;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
-public class ControladorTurno {
+public class ControladorTurno extends ControladorObservable {
 
-    private ServicioTurno servicioTurno;
+    private static final String FORMATO_INVALIDO = "Fecha u hora con formato inválido.\nFecha: aaaa-mm-dd   Hora: hh:mm";
+
+    private final ServicioTurno servicioTurno;
 
     public ControladorTurno(ServicioTurno servicioTurno) {
+        super(servicioTurno);
         this.servicioTurno = servicioTurno;
     }
 
-    public Turno asignar(Long idPaciente, Long idOdontologo, LocalDate fechaInicio, LocalTime hora) {
-        return servicioTurno.reservar(idPaciente, idOdontologo, fechaInicio, hora);
+    // Secretario: asigna un turno desde "Gestionar Turnos"
+    public Turno asignar(SolicitudTurno solicitud) {
+        return servicioTurno.asignar(crearTurno(solicitud));
+    }
+
+    // Paciente: solicita un turno desde su ventana
+    public Turno solicitar(SolicitudTurno solicitud) {
+        return servicioTurno.solicitar(crearTurno(solicitud));
     }
 
     public Turno confirmar(Long idTurno) {
@@ -29,11 +40,12 @@ public class ControladorTurno {
         return servicioTurno.cancelar(idTurno);
     }
 
-    public Turno reprogramar(Long idTurno, LocalDate nuevaFecha, LocalTime nuevaHora) {
-        Turno turno = servicioTurno.buscarPorId(idTurno);
-        turno.setFecha(nuevaFecha);
-        turno.setHora(nuevaHora);
-        return servicioTurno.modificar(turno);
+    public Turno cancelarPorPaciente(Long idTurno, Long idPaciente) {
+        return servicioTurno.cancelarPorPaciente(idTurno, idPaciente);
+    }
+
+    public Turno reprogramar(Long idTurno, String nuevaFecha, String nuevaHora) {
+        return servicioTurno.reprogramar(idTurno, leerFecha(nuevaFecha), leerHora(nuevaHora));
     }
 
     public Turno cambiarEstado(Long idTurno, EstadoTurno nuevoEstado) {
@@ -52,24 +64,32 @@ public class ControladorTurno {
         return servicioTurno.listarPorPaciente(idPaciente);
     }
 
-    public List<Turno> listarPorOdontologo(Long idOdontologo) {
-        return servicioTurno.listarPorOdontologo(idOdontologo);
+    public List<Turno> listarPorEstado(EstadoTurno estado) {
+        return servicioTurno.listarPorEstado(estado);
     }
 
-    public List<Turno> listarPorFecha(LocalDate fecha) {
-        return servicioTurno.listarPorFecha(fecha);
+    public void eliminar(Long id) {
+        servicioTurno.eliminar(id);
     }
 
-    public List<Turno> listarPorRangoFechas(LocalDate desde, LocalDate hasta) {
-        return servicioTurno.listarPorRangoFechas(desde, hasta);
+    private Turno crearTurno(SolicitudTurno solicitud) {
+        return new Turno(leerFecha(solicitud.getFecha()), leerHora(solicitud.getHora()),
+                solicitud.getPaciente(), solicitud.getOdontologo(), solicitud.getTratamiento());
     }
 
-    public boolean eliminarPorId(Long id) {
+    private LocalDate leerFecha(String texto) {
         try {
-            servicioTurno.eliminar(id);
-        } catch (TurnoNoEncontradoException e) {
-            return false;
+            return LocalDate.parse(texto.trim());
+        } catch (DateTimeParseException e) {
+            throw new DatoInvalidoException(FORMATO_INVALIDO);
         }
-        return true;
+    }
+
+    private LocalTime leerHora(String texto) {
+        try {
+            return LocalTime.parse(texto.trim());
+        } catch (DateTimeParseException e) {
+            throw new DatoInvalidoException(FORMATO_INVALIDO);
+        }
     }
 }

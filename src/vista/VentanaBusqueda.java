@@ -4,55 +4,56 @@ import controlador.ControladorPaciente;
 import controlador.ControladorOdontologo;
 import dominio.Paciente;
 import dominio.Odontologo;
+import observador.Evento;
+import observador.Observador;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-public class VentanaBusqueda extends JFrame {
+public class VentanaBusqueda extends Ventana implements Observador {
+
+    private static final Dimension TAMANIO = new Dimension(760, 480);
+    private static final String[] COLUMNAS_PACIENTES = {"ID", "Nombre", "Apellido", "DNI", "Email", "Obra social"};
+    private static final String[] COLUMNAS_ODONTOLOGOS = {"ID", "Nombre", "Apellido", "Matrícula"};
 
     private final ControladorPaciente controladorPaciente;
     private final ControladorOdontologo controladorOdontologo;
 
-    private JComboBox<String> comboTipo;
+    private JComboBox<TipoBusqueda> comboTipo;
     private JTextField txtBuscar;
-    private JTable tabla;
-    private DefaultTableModel modelo;
+    private final ModeloTablaSoloLectura modelo = new ModeloTablaSoloLectura(COLUMNAS_PACIENTES);
 
     public VentanaBusqueda(ControladorPaciente controladorPaciente,
                            ControladorOdontologo controladorOdontologo) {
+        super("Búsquedas", TAMANIO);
         this.controladorPaciente = controladorPaciente;
         this.controladorOdontologo = controladorOdontologo;
-        configurarVentana();
         add(crearPanelBusqueda(), BorderLayout.NORTH);
         add(crearTabla(), BorderLayout.CENTER);
-        actualizar(); // arranca mostrando todos los pacientes
+        buscar(); // arranca mostrando todos los pacientes
+
+        suscribir(this, controladorPaciente, controladorOdontologo);
     }
 
-    private void configurarVentana() {
-        setTitle("Búsquedas");
-        setSize(760, 480);
-        setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLayout(new BorderLayout(10, 10));
+    @Override
+    public void actualizar(Evento evento) {
+        buscar();
     }
 
     private JPanel crearPanelBusqueda() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 10));
         panel.setBorder(BorderFactory.createTitledBorder("Buscar"));
 
-        comboTipo = new JComboBox<>(new String[]{"Pacientes", "Odontólogos"});
-        // Si cambia el tipo, rearmo la tabla con las columnas correctas
-        comboTipo.addActionListener(e -> actualizar());
+        comboTipo = new JComboBox<>(TipoBusqueda.values());
+        comboTipo.addActionListener(e -> buscar());
 
         txtBuscar = new JTextField(22);
-        // KeyListener: en cada tecla soltada, vuelvo a filtrar
         txtBuscar.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
-                actualizar();
+                buscar();
             }
         });
 
@@ -64,36 +65,31 @@ public class VentanaBusqueda extends JFrame {
     }
 
     private JScrollPane crearTabla() {
-        modelo = new DefaultTableModel(new String[]{"ID", "Nombre", "Apellido", "DNI", "Email"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        tabla = new JTable(modelo);
-        JScrollPane scroll = new JScrollPane(tabla);
+        JScrollPane scroll = new JScrollPane(new JTable(modelo));
         scroll.setBorder(BorderFactory.createTitledBorder("Resultados"));
         return scroll;
     }
 
-    private void actualizar() {
-        String tipo = (String) comboTipo.getSelectedItem();
+    private void buscar() {
         String texto = txtBuscar.getText().trim().toLowerCase();
 
-        if ("Odontólogos".equals(tipo)) {
-            modelo.setColumnIdentifiers(new String[]{"ID", "Nombre", "Apellido", "Matrícula"});
+        if (comboTipo.getSelectedItem() == TipoBusqueda.ODONTOLOGOS) {
+            modelo.setColumnIdentifiers(COLUMNAS_ODONTOLOGOS);
             modelo.setRowCount(0);
-            for (Odontologo o : controladorOdontologo.listarTodos()) {
-                if (coincide(texto, o.getNombre(), o.getApellido(), o.getMatricula())) {
-                    modelo.addRow(new Object[]{o.getId(), o.getNombre(), o.getApellido(), o.getMatricula()});
+            for (Odontologo odontologo : controladorOdontologo.listarTodos()) {
+                if (coincide(texto, odontologo.getNombre(), odontologo.getApellido(), odontologo.getMatricula())) {
+                    modelo.addRow(new Object[]{odontologo.getId(), odontologo.getNombre(),
+                            odontologo.getApellido(), odontologo.getMatricula()});
                 }
             }
-        } else { // Pacientes
-            modelo.setColumnIdentifiers(new String[]{"ID", "Nombre", "Apellido", "DNI", "Email"});
+        } else {
+            modelo.setColumnIdentifiers(COLUMNAS_PACIENTES);
             modelo.setRowCount(0);
-            for (Paciente p : controladorPaciente.listarTodos()) {
-                if (coincide(texto, p.getNombre(), p.getApellido(), p.getDni())) {
-                    modelo.addRow(new Object[]{p.getId(), p.getNombre(), p.getApellido(), p.getDni(), p.getEmail()});
+            for (Paciente paciente : controladorPaciente.listarTodos()) {
+                String obraSocial = paciente.getObraSocial().getNombre();
+                if (coincide(texto, paciente.getNombre(), paciente.getApellido(), paciente.getDni(), obraSocial)) {
+                    modelo.addRow(new Object[]{paciente.getId(), paciente.getNombre(), paciente.getApellido(),
+                            paciente.getDni(), paciente.getEmail(), obraSocial});
                 }
             }
         }

@@ -1,42 +1,32 @@
 package controlador;
 
-import dominio.Domicilio;
 import dominio.Paciente;
+import dto.DatosPaciente;
 import servicio.ServicioPaciente;
-import excepcion.PacienteNoEncontradoException;
 
 import java.util.List;
 
-public class ControladorPaciente {
+public class ControladorPaciente extends ControladorObservable {
 
-    private ServicioPaciente servicioPaciente;
+    private final ServicioPaciente servicioPaciente;
 
     public ControladorPaciente(ServicioPaciente servicioPaciente) {
+        super(servicioPaciente);
         this.servicioPaciente = servicioPaciente;
     }
 
-    public Paciente registrar(String nombre, String apellido, String dni, String email, String calle, String numero, String localidad, String provincia) {
-        Domicilio domicilio = new Domicilio(calle, numero,  localidad, provincia);
-        Paciente paciente = new Paciente(nombre, apellido, dni, email, domicilio);
-        return servicioPaciente.registrar(paciente);
+    public Paciente registrar(DatosPaciente datos) {
+        return servicioPaciente.registrar(crearPaciente(datos));
     }
 
-    public Paciente modificar(Long id, String nombre, String apellido, String email, String calle, String numero, String localidad, String provincia) { // no se pasa el dni porque es un tema "legal".
-        Paciente paciente = servicioPaciente.buscarPorId(id); // Acá vienen los datos de paciente para que sean cambiados. Si no se cambian, quedan igual que antes
-        paciente.setNombre(nombre);
-        paciente.setApellido(apellido);
-        paciente.setEmail(email);
-        paciente.setDomicilio(new Domicilio(calle, numero, localidad, provincia));
-        return servicioPaciente.modificar(paciente);
+    public Paciente modificar(Long id, DatosPaciente datos) {
+        Paciente cambios = crearPaciente(datos);
+        cambios.setId(id);
+        return servicioPaciente.modificar(cambios);
     }
 
-    public boolean eliminarPorId(Long id) {
-        try {
-            servicioPaciente.eliminar(id); // primero llamamos al metodo eliminar de servicio para ver si puede eliminar a este paciente
-        } catch (PacienteNoEncontradoException e) { // si no pudo, tira la excepcion y el controller da false
-            return false;
-        }
-        return true; // si lo borró, o sea lo encontró, tira true
+    public void eliminar(Long id) {
+        servicioPaciente.eliminar(id);
     }
 
     public Paciente buscarPorId(Long id) {
@@ -51,7 +41,12 @@ public class ControladorPaciente {
         return servicioPaciente.listarTodos();
     }
 
-    public List<Paciente> listarOrdenadosPorApellido() {
-        return servicioPaciente.listarOrdenadosPorApellido();
+    public List<Paciente> listarPorApellido() {
+        return servicioPaciente.listarPorApellido();
+    }
+
+    private Paciente crearPaciente(DatosPaciente datos) {
+        return new Paciente(datos.getNombre(), datos.getApellido(), datos.getDni(), datos.getEmail(),
+                datos.getDomicilio(), datos.getObraSocial());
     }
 }

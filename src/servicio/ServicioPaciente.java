@@ -1,6 +1,10 @@
 package servicio;
 
 import dominio.Paciente;
+import dominio.ObraSocial;
+import observador.EventoPaciente;
+import observador.Sujeto;
+import observador.TipoEvento;
 import excepcion.DniDuplicadoException;
 import excepcion.DatoInvalidoException;
 import excepcion.PacienteNoEncontradoException;
@@ -9,94 +13,86 @@ import repositorio.RepositorioPaciente;
 import java.util.List;
 import java.util.Collections;
 
-public class ServicioPaciente {
+import static servicio.Validador.requerir;
+import static servicio.Validador.requerirTexto;
+import static servicio.Validador.validarNombreYApellido;
 
-    private RepositorioPaciente repositorio;
+/**
+ * Hereda de Sujeto (Observer): avisa cuando se registra, modifica o elimina un paciente,
+ * así las ventanas que muestran pacientes se actualizan solas (por ejemplo, "Gestionar
+ * Pacientes" del secretario cuando alguien se registra desde la ventana del paciente).
+ */
+public class ServicioPaciente extends Sujeto {
+
+    private static final String REGEX_DNI = "\\d{7,8}";
+    private static final String NO_ENCONTRADO = "El paciente no está en el sistema, intente con otro";
+
+    private final RepositorioPaciente repositorio;
 
     public ServicioPaciente(RepositorioPaciente repositorio) {
         this.repositorio = repositorio;
     }
 
     public Paciente registrar(Paciente paciente) {
-        if (paciente == null) {
-            throw new DatoInvalidoException("Ingrese un valor, por favor");
+        validar(paciente);
+        if (repositorio.buscarPorDni(paciente.getDni()) != null) {
+            throw new DniDuplicadoException("El DNI ya existe en el sistema, intente con otro");
         }
-        if (paciente.getNombre() == null || paciente.getNombre().isEmpty()) {
-            throw new DatoInvalidoException("Ingrese un nombre valido, por favor");
-        }
-        if (paciente.getApellido() == null || paciente.getApellido().isEmpty()) {
-            throw new DatoInvalidoException("Ingrese un apellido valido, por favor");
-        }
-        if (paciente.getDni() == null || paciente.getDni().isEmpty()) { // Se fija que haya algún dato
-            throw new DatoInvalidoException("Ingrese un DNI valido, por favor: ");
-        }
-        if (!paciente.getDni().matches("\\d{7,8}")) {
-            throw new DatoInvalidoException("Ingrese un DNI valido, por favor");
-        }
-        if (paciente.getEmail() == null || paciente.getEmail().isEmpty()) {
-            throw new DatoInvalidoException("Ingrese un email valido, por favor");
-        }
-        if (!paciente.getEmail().contains("@") || !paciente.getEmail().contains(".")) {
-            throw new DatoInvalidoException("Ingrese un email valido, por favor");
-        }
-        Paciente existe = repositorio.buscarPorDni(paciente.getDni()); // el repositorio busca a ver si tiene ese dato guardado y lo guarda en una variable
-        if (existe != null) { // Si tiene algo la variable, está duplicado
-            throw new DniDuplicadoException("El DNI ya existe en el sistema, intente con otro: ");
-        }
-        return repositorio.guardar(paciente); // si no encontró nada, lo va a pasar a repositorio para que lo guarde
+        Paciente guardado = repositorio.registrar(paciente);
+        notificarObservadores(new EventoPaciente(TipoEvento.PACIENTE_REGISTRADO, guardado));
+        return guardado;
     }
 
     public Paciente buscarPorId(Long idPaciente) {
-        Paciente paciente = repositorio.buscarPorId(idPaciente); // Busca el id en repositorio y lo guarda en una variable
-        if (paciente == null) { // Si no hay nada, tira error, si no, lo guarda
-            throw new PacienteNoEncontradoException("El paciente no esta en el sistema, intente con otro: ");
-        }
-        return paciente;
+        return requerir(repositorio.buscarPorId(idPaciente), () -> new PacienteNoEncontradoException(NO_ENCONTRADO));
     }
 
     public Paciente buscarPorDni(String dniPaciente) {
-        if (dniPaciente == null || dniPaciente.isEmpty()) { // Se fija que haya algún dato
-            throw new DatoInvalidoException("Intente nuevamente, por favor: ");
-        }
-        Paciente paciente = repositorio.buscarPorDni(dniPaciente); // Busca el id en repositorio y lo guarda en una variable
-        if (paciente == null) { // Si no hay nada, tira error, si no, lo guarda
-            throw new PacienteNoEncontradoException("El paciente no está en el sistema, intente con otro: ");
-        }
-        return paciente;
+        requerirTexto(dniPaciente, "Intente nuevamente, por favor");
+        return requerir(repositorio.buscarPorDni(dniPaciente), () -> new PacienteNoEncontradoException(NO_ENCONTRADO));
     }
 
-    public Paciente modificar(Paciente paciente) {
-        if (paciente == null) {
-            throw new DatoInvalidoException("Ingrese un valor, por favor");
-        }
-        if (paciente.getNombre() == null || paciente.getNombre().isEmpty()) {
-            throw new DatoInvalidoException("Ingrese un nombre valido, por favor");
-        }
-        if (paciente.getApellido() == null || paciente.getApellido().isEmpty()) {
-            throw new DatoInvalidoException("Ingrese un apellido valido, por favor");
-        }
-        if (paciente.getEmail() == null || paciente.getEmail().isEmpty()) {
-            throw new DatoInvalidoException("Ingrese un email valido, por favor");
-        }
-        if (!paciente.getEmail().contains("@") || !paciente.getEmail().contains(".")) {
-            throw new DatoInvalidoException("Ingrese un email valido, por favor");
-        }
-        buscarPorId(paciente.getId());
-        return repositorio.actualizar(paciente);
+    public Paciente modificar(Paciente cambios) {
+        Paciente original = buscarPorId(cambios.getId());
+        cambios.setDni(original.getDni());
+        validar(cambios);
+        original.setNombre(cambios.getNombre());
+        original.setApellido(cambios.getApellido());
+        original.setEmail(cambios.getEmail());
+        original.setDomicilio(cambios.getDomicilio());
+        original.setObraSocial(cambios.getObraSocial());
+        Paciente actualizado = repositorio.actualizar(original);
+        notificarObservadores(new EventoPaciente(TipoEvento.PACIENTE_MODIFICADO, actualizado));
+        return actualizado;
     }
 
     public void eliminar(Long id) {
-        buscarPorId(id);
+        Paciente paciente = buscarPorId(id); // lo guardo antes de borrarlo para poder avisar quién era
         repositorio.eliminar(id);
+        notificarObservadores(new EventoPaciente(TipoEvento.PACIENTE_ELIMINADO, paciente));
     }
 
     public List<Paciente> listarTodos() {
-        return repositorio.buscarTodos();
+        return repositorio.listarTodos();
     }
 
-    public List<Paciente> listarOrdenadosPorApellido() {
-        List<Paciente> pacientes = repositorio.buscarTodos();
+    public List<Paciente> listarPorApellido() {
+        List<Paciente> pacientes = repositorio.listarTodos();
         Collections.sort(pacientes);
         return pacientes;
+    }
+
+    private void validar(Paciente paciente) {
+        validarNombreYApellido(paciente);
+        if (paciente.getDni() == null || !paciente.getDni().matches(REGEX_DNI)) {
+            throw new DatoInvalidoException("Ingrese un DNI válido, por favor");
+        }
+        String email = paciente.getEmail();
+        if (email == null || !email.contains("@") || !email.contains(".")) {
+            throw new DatoInvalidoException("Ingrese un email válido, por favor");
+        }
+        if (paciente.getObraSocial() == null) { // sin obra social elegida -> particular
+            paciente.setObraSocial(ObraSocial.PARTICULAR);
+        }
     }
 }

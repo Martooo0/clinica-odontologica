@@ -23,4 +23,4 @@ public class Odontologo extends Persona {
     public String toString() {
         return super.toString() + ", matricula: " + matricula;
     }
-}
+}

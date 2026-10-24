@@ -8,6 +8,7 @@ public class Paciente extends Persona implements Comparable<Paciente>{
     private String email;
     private LocalDate fechaIngreso =  LocalDate.now();
     private Domicilio domicilio;
+    private ObraSocial obraSocial = ObraSocial.PARTICULAR; // por defecto, sin obra social
 
     public Paciente() {}
 
@@ -16,6 +17,11 @@ public class Paciente extends Persona implements Comparable<Paciente>{
         this.dni = dni;
         this.email = email;
         this.domicilio = domicilio;
+    }
+
+    public Paciente(String nombre, String apellido, String dni, String email, Domicilio domicilio, ObraSocial obraSocial) {
+        this(nombre, apellido, dni, email, domicilio); // reuso el constructor de arriba
+        this.obraSocial = obraSocial;
     }
 
     @Override
@@ -39,6 +45,10 @@ public class Paciente extends Persona implements Comparable<Paciente>{
         return domicilio;
     }
 
+    public ObraSocial getObraSocial() {
+        return obraSocial;
+    }
+
     public void setDni(String dni) {
         this.dni = dni;
     }
@@ -55,8 +65,15 @@ public class Paciente extends Persona implements Comparable<Paciente>{
         this.domicilio = domicilio;
     }
 
+    public void setObraSocial(ObraSocial obraSocial) {
+        this.obraSocial = obraSocial;
+    }
+
     @Override
     public String toString() {
-        return super.toString() + " DNI: " + dni + " email: " + email + " con domicilio en: " + domicilio + ". Ingreso: " + fechaIngreso;
+        return super.toString() + " DNI: " + dni + " email: " + email
+                + " con domicilio en: " + domicilio
+                + ". Obra social: " + obraSocial.getNombre()
+                + ". Ingreso: " + fechaIngreso;
     }
 }
