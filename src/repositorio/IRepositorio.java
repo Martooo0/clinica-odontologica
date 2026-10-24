@@ -4,9 +4,9 @@ import java.util.List;
 
 public interface IRepositorio <T> {
 
-    T guardar(T entidad);
+    T registrar(T entidad);
     T buscarPorId(Long id);
-    List<T> buscarTodos();
+    List<T> listarTodos();
     T actualizar(T entidad);
     void eliminar(Long id);
 }

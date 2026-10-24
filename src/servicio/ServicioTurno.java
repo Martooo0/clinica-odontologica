@@ -1,125 +1,168 @@
 package servicio;
 
-import dominio.Odontologo;
 import dominio.Turno;
-import dominio.Paciente;
 import dominio.EstadoTurno;
 
-import repositorio.RepositorioOdontologo;
-import repositorio.RepositorioPaciente;
+import observador.Evento;
+import observador.Sujeto;
+import observador.TipoEvento;
+
 import repositorio.RepositorioTurno;
 
 import excepcion.DatoInvalidoException;
-import excepcion.PacienteNoEncontradoException;
-import excepcion.OdontologoNoEncontradoException;
 import excepcion.TurnoYaReservadoException;
 import excepcion.TurnoNoEncontradoException;
 
 import java.util.List;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-public class ServicioTurno {
+import static servicio.Validador.requerir;
 
-    private RepositorioTurno repositorioTurno;
-    private RepositorioPaciente repositorioPaciente;
-    private RepositorioOdontologo repositorioOdontologo;
+/**
+ * Reglas de los turnos.
+ *
+ * Hereda de Sujeto (patrón Observer): cada vez que un turno cambia, avisa a las ventanas
+ * suscriptas. Así, cuando el paciente pide un turno desde su ventana, la ventana del
+ * secretario se entera sola y refresca su lista, sin que nadie apriete "actualizar".
+ */
+public class ServicioTurno extends Sujeto {
 
-    public ServicioTurno(RepositorioTurno repositorioTurno, RepositorioPaciente repositorioPaciente, RepositorioOdontologo repositorioOdontologo) {
+    private final RepositorioTurno repositorioTurno;
+    private final ServicioPago servicioPago; // cada turno nuevo genera su pago
+
+    public ServicioTurno(RepositorioTurno repositorioTurno, ServicioPago servicioPago) {
         this.repositorioTurno = repositorioTurno;
-        this.repositorioPaciente = repositorioPaciente;
-        this.repositorioOdontologo = repositorioOdontologo;
+        this.servicioPago = servicioPago;
     }
 
-    public Turno reservar(Long idPaciente, Long idOdontologo, LocalDate fecha, LocalTime hora) {
-        if (fecha == null || hora == null) {
-            throw new DatoInvalidoException("La fecha y la hora no pueden ser nulas");
-        }
-        if (fecha.isBefore(LocalDate.now())) {
-            throw new DatoInvalidoException("La fecha del turno no puede ser anterior a hoy");
-        }
-        Paciente paciente = repositorioPaciente.buscarPorId(idPaciente);
-        if (paciente == null) {
-            throw new PacienteNoEncontradoException("Paciente no encontrado");
-        }
-        Odontologo odontologo = repositorioOdontologo.buscarPorId(idOdontologo);
-        if (odontologo == null) {
-            throw new OdontologoNoEncontradoException("Odontólogo no encontrado");
-        }
-        List<Turno> turnosDelOdontologo = repositorioTurno.buscarPorOdontologo(idOdontologo); // en una variable se guardan los turnos que tiene asignado un odontologo
-        for (Turno turno : turnosDelOdontologo) { // recorre cada turno
-            if (turno.getFecha().equals(fecha) && turno.getHora().equals(hora)) { // verifica que no coincida la fecha y la hora
-                throw new TurnoYaReservadoException("Turno ya reservado");
-            }
-        }
-        return repositorioTurno.guardar(new Turno(fecha, hora, paciente, odontologo));
+    // ---------------- Alta de turnos ----------------
+
+    // Lo usa el PACIENTE desde su ventana. Avisa al secretario.
+    public Turno solicitar(Turno turno) {
+        return crearTurno(turno, TipoEvento.TURNO_SOLICITADO);
     }
 
-    public Turno buscarPorId(Long idTurno) {
-        Turno turno = repositorioTurno.buscarPorId(idTurno);
-        if (turno == null) {
-            throw new TurnoNoEncontradoException("Turno no encontrado");
-        }
-        return turno;
+    // Lo usa el SECRETARIO desde "Gestionar Turnos". Avisa al paciente.
+    public Turno asignar(Turno turno) {
+        return crearTurno(turno, TipoEvento.TURNO_ASIGNADO);
     }
+
+    // Las validaciones son las mismas sin importar quién pide el turno
+    private Turno crearTurno(Turno turno, TipoEvento tipoEvento) {
+        validarFechaYHora(turno.getFecha(), turno.getHora());
+        verificarDisponibilidad(turno.getOdontologo().getId(), turno.getFecha(), turno.getHora(), null);
+
+        Turno guardado = repositorioTurno.registrar(turno);
+        servicioPago.generarPago(guardado); // queda PENDIENTE, con el precio congelado
+        notificarObservadores(Evento.deTurno(tipoEvento, guardado));
+        return guardado;
+    }
+
+    // ---------------- Cambios de estado ----------------
 
     public Turno confirmar(Long idTurno) {
-        Turno turno = buscarPorId(idTurno);
-        turno.setEstado(EstadoTurno.CONFIRMADO);
-        return repositorioTurno.actualizar(turno);
+        return cambiarEstado(idTurno, EstadoTurno.CONFIRMADO);
     }
 
     public Turno cancelar(Long idTurno) {
-        Turno turno = buscarPorId(idTurno);
-        turno.setEstado(EstadoTurno.CANCELADO);
-        return repositorioTurno.actualizar(turno);
+        return cambiarEstado(idTurno, EstadoTurno.CANCELADO);
     }
 
     public Turno cambiarEstado(Long idTurno, EstadoTurno estado) {
-        if (estado == null) {
-            throw new DatoInvalidoException("Seleccione un estado válido");
-        }
+        requerir(estado, () -> new DatoInvalidoException("Seleccione un estado válido"));
         Turno turno = buscarPorId(idTurno);
-        turno.setEstado(estado);
-        return repositorioTurno.actualizar(turno); // no valida la fecha: cambiar el estado de un turno pasado es válido
+        // Si "descancelo" un turno, su horario pudo haberlo tomado otro mientras estaba cancelado
+        if (!turno.getEstado().ocupaHorario() && estado.ocupaHorario()) {
+            verificarDisponibilidad(turno.getOdontologo().getId(), turno.getFecha(), turno.getHora(), idTurno);
+        }
+        turno.cambiarEstado(estado);
+        return aplicarEstado(turno, estado.getEvento());
     }
 
-    public Turno modificar(Turno turno) {
-        if (turno == null) {
-            throw new DatoInvalidoException("Ingrese un valor, por favor");
+    // El paciente solo puede cancelar SUS turnos, y solo si todavía no se atendieron
+    public Turno cancelarPorPaciente(Long idTurno, Long idPaciente) {
+        Turno turno = buscarPorId(idTurno);
+        if (!turno.getPaciente().getId().equals(idPaciente)) {
+            throw new DatoInvalidoException("Ese turno no es tuyo");
         }
-        if (turno.getFecha() == null || turno.getHora() == null) {
-            throw new DatoInvalidoException("La fecha y la hora no pueden ser nulas");
+        if (!turno.getEstado().esCancelablePorPaciente()) {
+            throw new DatoInvalidoException("Solo se pueden cancelar turnos pendientes o confirmados");
         }
-        if (turno.getFecha().isBefore(LocalDate.now())) {
-            throw new DatoInvalidoException("La fecha del turno no puede ser anterior a hoy");
-        }
-        buscarPorId(turno.getId());
-        return repositorioTurno.actualizar(turno);
+        turno.cambiarEstado(EstadoTurno.CANCELADO);
+        return aplicarEstado(turno, TipoEvento.TURNO_CANCELADO_POR_PACIENTE);
+    }
+
+    private Turno aplicarEstado(Turno turno, TipoEvento tipoEvento) {
+        repositorioTurno.actualizar(turno); // no valida la fecha: cambiar el estado de un turno pasado es válido
+        servicioPago.sincronizarConTurno(turno);
+        notificarObservadores(Evento.deTurno(tipoEvento, turno));
+        return turno;
+    }
+
+    // ---------------- Reprogramar / eliminar ----------------
+
+    public Turno reprogramar(Long idTurno, LocalDate nuevaFecha, LocalTime nuevaHora) {
+        validarFechaYHora(nuevaFecha, nuevaHora);
+        Turno turno = buscarPorId(idTurno);
+        verificarDisponibilidad(turno.getOdontologo().getId(), nuevaFecha, nuevaHora, idTurno); // se excluye a sí mismo
+        turno.setFecha(nuevaFecha);
+        turno.setHora(nuevaHora);
+        repositorioTurno.actualizar(turno);
+        notificarObservadores(Evento.deTurno(TipoEvento.TURNO_REPROGRAMADO, turno));
+        return turno;
     }
 
     public void eliminar(Long id) {
-        buscarPorId(id);
+        Turno turno = buscarPorId(id);
+        servicioPago.eliminarPorTurno(id); // sin turno, el pago no tiene sentido
         repositorioTurno.eliminar(id);
+        notificarObservadores(Evento.deTurno(TipoEvento.TURNO_ELIMINADO, turno));
+    }
+
+    // ---------------- Consultas ----------------
+
+    public Turno buscarPorId(Long idTurno) {
+        return requerir(repositorioTurno.buscarPorId(idTurno), () -> new TurnoNoEncontradoException("Turno no encontrado"));
     }
 
     public List<Turno> listarTodos() {
-        return repositorioTurno.buscarTodos();
+        return repositorioTurno.listarTodos();
     }
 
     public List<Turno> listarPorPaciente(Long idPaciente) {
         return repositorioTurno.buscarPorPaciente(idPaciente);
     }
 
-    public List<Turno> listarPorOdontologo(Long idOdontologo) {
-        return repositorioTurno.buscarPorOdontologo(idOdontologo);
+    public List<Turno> listarPorEstado(EstadoTurno estado) {
+        return repositorioTurno.buscarPorEstado(estado);
     }
 
-    public List<Turno> listarPorFecha(LocalDate fecha) {
-        return repositorioTurno.buscarPorFecha(fecha);
+    // ---------------- Apoyo ----------------
+
+    private void validarFechaYHora(LocalDate fecha, LocalTime hora) {
+        if (fecha == null || hora == null) {
+            throw new DatoInvalidoException("La fecha y la hora no pueden ser nulas");
+        }
+        if (fecha.isBefore(LocalDate.now())) {
+            throw new DatoInvalidoException("La fecha del turno no puede ser anterior a hoy");
+        }
+        if (LocalDateTime.of(fecha, hora).isBefore(LocalDateTime.now())) {
+            throw new DatoInvalidoException("Ese horario de hoy ya pasó");
+        }
     }
 
-    public List<Turno> listarPorRangoFechas(LocalDate desde, LocalDate hasta) {
-        return repositorioTurno.buscarPorRangoFechas(desde, hasta);
+    // El odontólogo no puede tener dos turnos a la misma hora. Los cancelados no cuentan (ese horario quedó libre).
+    // idTurnoExcluido sirve para reprogramar: el turno que estoy moviendo no choca consigo mismo.
+    private void verificarDisponibilidad(Long idOdontologo, LocalDate fecha, LocalTime hora, Long idTurnoExcluido) {
+        List<Turno> turnosDelOdontologo = repositorioTurno.buscarPorOdontologo(idOdontologo);
+        for (Turno turno : turnosDelOdontologo) {
+            if (!turno.getEstado().ocupaHorario()) continue;
+            if (turno.getId().equals(idTurnoExcluido)) continue;
+            if (turno.getFecha().equals(fecha) && turno.getHora().equals(hora)) {
+                throw new TurnoYaReservadoException("El odontólogo ya tiene un turno ese día a esa hora");
+            }
+        }
     }
 }

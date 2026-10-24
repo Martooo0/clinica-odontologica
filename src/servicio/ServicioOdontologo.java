@@ -1,84 +1,73 @@
 package servicio;
 
 import dominio.Odontologo;
-import excepcion.DatoInvalidoException;
 import excepcion.MatriculaDuplicadaException;
 import excepcion.OdontologoNoEncontradoException;
+import observador.Evento;
+import observador.Sujeto;
+import observador.TipoEvento;
 import repositorio.RepositorioOdontologo;
 
 import java.util.List;
 
-public class ServicioOdontologo {
+import static servicio.Validador.requerir;
+import static servicio.Validador.requerirTexto;
+import static servicio.Validador.validarNombreYApellido;
 
-    private RepositorioOdontologo repositorio;
+/**
+ * Hereda de Sujeto (Observer): avisa cuando se agrega, modifica o elimina un odontólogo,
+ * así el desplegable de la ventana del paciente (y el de Gestionar Turnos) se actualiza solo.
+ */
+public class ServicioOdontologo extends Sujeto {
+
+    private final RepositorioOdontologo repositorio;
 
     public ServicioOdontologo(RepositorioOdontologo repositorio) {
         this.repositorio = repositorio;
     }
 
     public Odontologo registrar(Odontologo odontologo) {
-        if (odontologo == null) {
-            throw new DatoInvalidoException("Ingrese un valor, por favor");
+        validar(odontologo);
+        if (repositorio.buscarPorMatricula(odontologo.getMatricula()) != null) {
+            throw new MatriculaDuplicadaException("La matrícula ya se encuentra en el sistema, intente nuevamente");
         }
-        if (odontologo.getNombre() == null || odontologo.getNombre().isEmpty()) {
-            throw new DatoInvalidoException("Ingrese un nombre valido, por favor");
-        }
-        if (odontologo.getApellido() == null || odontologo.getApellido().isEmpty()) {
-            throw new DatoInvalidoException("Ingrese un apellido valido, por favor");
-        }
-        if (odontologo.getMatricula() == null || odontologo.getMatricula().isEmpty()) {
-            throw new DatoInvalidoException("Ingrese una matricula valida, por favor");
-        }
-        Odontologo existe = repositorio.buscarPorMatricula(odontologo.getMatricula());
-        if (existe != null) {
-            throw new MatriculaDuplicadaException("La matricula ya se encuentra en el sistema, intente nuevamente: ");
-        }
-        return repositorio.guardar(odontologo);
-    }
-
-    public Odontologo buscarPorMatricula(String matricula) {
-        Odontologo odontologo = repositorio.buscarPorMatricula(matricula);
-        if (odontologo == null) {
-            throw new OdontologoNoEncontradoException("El odontólogo no esta en el sistema, intente con otro: ");
-        }
-        return odontologo;
+        Odontologo guardado = repositorio.registrar(odontologo);
+        notificarObservadores(Evento.deOdontologo(TipoEvento.ODONTOLOGO_REGISTRADO, guardado));
+        return guardado;
     }
 
     public Odontologo buscarPorId(Long id) {
-        Odontologo odontologo = repositorio.buscarPorId(id);
-        if (odontologo == null) {
-            throw new OdontologoNoEncontradoException("El odontólogo no está en el sistema, intente con otro: ");
-        }
-        return odontologo;
+        return requerir(repositorio.buscarPorId(id),
+                () -> new OdontologoNoEncontradoException("El odontólogo no está en el sistema, intente con otro"));
     }
 
-    public Odontologo modificar(Odontologo odontologo) {
-        if (odontologo == null) {
-            throw new DatoInvalidoException("Ingrese un valor, por favor");
+    public Odontologo modificar(Odontologo cambios) {
+        validar(cambios);
+        Odontologo conMismaMatricula = repositorio.buscarPorMatricula(cambios.getMatricula());
+        if (conMismaMatricula != null && !conMismaMatricula.getId().equals(cambios.getId())) {
+            throw new MatriculaDuplicadaException("La matrícula ya pertenece a otro odontólogo");
         }
-        if (odontologo.getNombre() == null || odontologo.getNombre().isEmpty()) {
-            throw new DatoInvalidoException("Ingrese un nombre valido, por favor");
-        }
-        if (odontologo.getApellido() == null || odontologo.getApellido().isEmpty()) {
-            throw new DatoInvalidoException("Ingrese un apellido valido, por favor");
-        }
-        if (odontologo.getMatricula() == null || odontologo.getMatricula().isEmpty()) {
-            throw new DatoInvalidoException("Ingrese una matricula valida, por favor");
-        }
-        Odontologo conMismaMatricula = repositorio.buscarPorMatricula(odontologo.getMatricula());
-        if (conMismaMatricula != null && !conMismaMatricula.getId().equals(odontologo.getId())) {
-            throw new MatriculaDuplicadaException("La matricula ya pertenece a otro odontólogo");
-        }
-        buscarPorId(odontologo.getId());
-        return repositorio.actualizar(odontologo);
+        Odontologo original = buscarPorId(cambios.getId());
+        original.setNombre(cambios.getNombre());
+        original.setApellido(cambios.getApellido());
+        original.setMatricula(cambios.getMatricula());
+        Odontologo actualizado = repositorio.actualizar(original);
+        notificarObservadores(Evento.deOdontologo(TipoEvento.ODONTOLOGO_MODIFICADO, actualizado));
+        return actualizado;
     }
 
     public void eliminar(Long id) {
-        buscarPorId(id);
+        Odontologo odontologo = buscarPorId(id); // lo guardo antes de borrarlo para poder avisar cuál era
         repositorio.eliminar(id);
+        notificarObservadores(Evento.deOdontologo(TipoEvento.ODONTOLOGO_ELIMINADO, odontologo));
     }
 
     public List<Odontologo> listarTodos() {
-        return repositorio.buscarTodos();
+        return repositorio.listarTodos();
+    }
+
+    private void validar(Odontologo odontologo) {
+        validarNombreYApellido(odontologo);
+        requerirTexto(odontologo.getMatricula(), "Ingrese una matrícula válida, por favor");
     }
 }

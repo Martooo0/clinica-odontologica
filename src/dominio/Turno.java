@@ -1,28 +1,32 @@
 package dominio;
 
+import excepcion.DatoInvalidoException;
+
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-public class Turno {
+public class Turno implements Identificable {
 
     private Long id;
     private LocalDate fecha;
     private LocalTime hora;
     private Paciente paciente;
     private Odontologo odontologo;
+    private Tratamiento tratamiento;
     private EstadoTurno estado;
 
-    public Turno(LocalDate fecha, LocalTime hora, Paciente paciente, Odontologo odontologo) {
+    public Turno(LocalDate fecha, LocalTime hora, Paciente paciente, Odontologo odontologo, Tratamiento tratamiento) {
         this.fecha = fecha;
         this.hora = hora;
         this.paciente = paciente;
         this.odontologo = odontologo;
+        this.tratamiento = tratamiento;
         this.estado = EstadoTurno.PENDIENTE;
     }
 
     public Turno() {}
 
+    @Override
     public Long getId() {
         return id;
     }
@@ -43,10 +47,20 @@ public class Turno {
         return odontologo;
     }
 
+    public Tratamiento getTratamiento() {
+        return tratamiento;
+    }
+
+    // Para mostrar en tablas sin repetir el chequeo de null en cada ventana
+    public String getNombreTratamiento() {
+        return tratamiento == null ? Constantes.VALOR_VACIO : tratamiento.getNombre();
+    }
+
     public EstadoTurno getEstado() {
         return estado;
     }
 
+    @Override
     public void setId(Long id) {
         this.id = id;
     }
@@ -67,8 +81,19 @@ public class Turno {
         this.odontologo = odontologo;
     }
 
+    public void setTratamiento(Tratamiento tratamiento) {
+        this.tratamiento = tratamiento;
+    }
+
     public void setEstado(EstadoTurno estado) {
         this.estado = estado;
+    }
+
+    public void cambiarEstado(EstadoTurno nuevoEstado) {
+        if (!estado.puedePasarA(nuevoEstado)) {
+            throw new DatoInvalidoException("Un turno " + estado + " no puede pasar a " + nuevoEstado);
+        }
+        this.estado = nuevoEstado;
     }
 
     @Override
@@ -76,13 +101,8 @@ public class Turno {
         return "Turno [id=" + id + "]"
                 + " - Paciente: " + paciente.getNombreCompleto()
                 + " - Odontólogo: " + odontologo.getNombreCompleto()
+                + " - Tratamiento: " + getNombreTratamiento()
                 + " - Fecha: " + fecha + " a las " + hora
                 + " - Estado: " + estado;
     }
-
-    public Boolean esFuturo() {
-        LocalDateTime ahora = LocalDateTime.now();
-        LocalDateTime momentoDelTurno = LocalDateTime.of(fecha, hora);
-        return momentoDelTurno.isAfter(ahora);
-    }
-}
+}
